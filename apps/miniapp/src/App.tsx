@@ -756,6 +756,18 @@ export default function App() {
                 >
                   {zh ? '🏆 导出抽奖中奖名单（Bot 私聊发 CSV）' : '🏆 Export Raffle Winners (DM CSV)'}
                 </Button>
+                <Button
+                  stretched
+                  size="s"
+                  mode="bezeled"
+                  style={{ marginTop: 8 }}
+                  onClick={async () => {
+                    const r = await apiFetch(`/api/groups/${selectedGroupId}/export/events`);
+                    setMsg(r.ok ? (zh ? '✅ 活动报名名单 CSV 已由 Bot 私聊发送给你！' : '✅ Event RSVPs CSV sent to your DM!') : `❌ ${r.error}`);
+                  }}
+                >
+                  {zh ? '📅 导出活动报名名单（Bot 私聊发 CSV）' : '📅 Export Event RSVPs (DM CSV)'}
+                </Button>
               </div>
               {recentWinners.length > 0 && (
                 <div style={{ borderTop: '1px solid rgba(128,128,128,0.18)', paddingTop: 6 }}>

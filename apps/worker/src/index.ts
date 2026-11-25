@@ -1160,6 +1160,37 @@ app.get("/api/groups/:id/export/winners", async (c) => {
   return c.json({ ok: true, sentToDm: true });
 });
 
+
+app.get("/api/groups/:id/export/events", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const grp = await c.env.DB.prepare("SELECT plan FROM groups WHERE group_id = ?").bind(groupId).first<any>();
+  if (grp?.plan !== "PRO") return c.json({ ok: false, error: "PRO_REQUIRED" }, 403);
+
+  const rows = await c.env.DB.prepare(`
+    SELECT e.title as event_title, em.telegram_id, u.first_name, em.status, em.created_at
+    FROM event_members em
+    JOIN events e ON em.event_id = e.id
+    LEFT JOIN users u ON em.telegram_id = u.telegram_id
+    WHERE e.group_id = ?
+    ORDER BY em.created_at DESC
+  `).bind(groupId).all<any>();
+
+  const csv = [
+    "event_title,telegram_id,name,status,joined_at",
+    ...(rows.results || []).map((r) =>
+      `"${(r.event_title || "").replace(/"/g, "")}",${r.telegram_id},"${(r.first_name || "").replace(/"/g, "")}",${r.status},${new Date(r.created_at).toISOString()}`
+    ),
+  ].join("\n");
+
+  const form = new FormData();
+  form.append("chat_id", String(user.id));
+  form.append("caption", "📅 群组活动报名与候补名单（CSV）");
+  form.append("document", new Blob(["\uFEFF" + csv], { type: "text/csv" }), "events_" + groupId + ".csv");
+  await fetch(`https://api.telegram.org/bot${c.env.TELEGRAM_BOT_TOKEN}/sendDocument`, { method: "POST", body: form });
+  return c.json({ ok: true, sentToDm: true });
+});
+
 // ==================== 4. Webhook & Cron ====================
 app.post('/webhook', async (c) => {
   if (c.req.header('X-Telegram-Bot-Api-Secret-Token') !== c.env.TELEGRAM_WEBHOOK_SECRET) {
