@@ -242,8 +242,18 @@ export default function App() {
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <input style={inputStyle} value={pktTitle} onChange={(e) => setPktTitle(e.target.value)} placeholder="红包祝福语" />
               <div style={{ display: 'flex', gap: 8 }}>
-                <input style={inputStyle} type="number" value={pktAmount} onChange={(e) => setPktAmount(e.target.value)} placeholder="总积分" />
-                <input style={inputStyle} type="number" value={pktCount} onChange={(e) => setPktCount(e.target.value)} placeholder="份数" />
+                
+  <div style={{ display: "flex", alignItems: "center", flex: 1, border: "1px solid rgba(128,128,128,0.3)", borderRadius: 10, padding: "0 12px" }}>
+    <input style={{ flex: 1, width: "100%", padding: "10px 0", border: "none", outline: "none", background: "transparent", color: "inherit", fontSize: 15 }} type="number" value={pktAmount} onChange={(e) => setPktAmount(e.target.value)} placeholder="总积分" />
+    <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: "nowrap" }}>积分</span>
+  </div>
+
+                
+  <div style={{ display: "flex", alignItems: "center", flex: 1, border: "1px solid rgba(128,128,128,0.3)", borderRadius: 10, padding: "0 12px" }}>
+    <input style={{ flex: 1, width: "100%", padding: "10px 0", border: "none", outline: "none", background: "transparent", color: "inherit", fontSize: 15 }} type="number" value={pktCount} onChange={(e) => setPktCount(e.target.value)} placeholder="份数" />
+    <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: "nowrap" }}>个</span>
+  </div>
+
               </div>
               <select style={inputStyle} value={pktType} onChange={(e) => setPktType(e.target.value as any)}>
                 <option value="LUCKY">拼手气红包</option>
@@ -278,7 +288,12 @@ export default function App() {
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <input style={inputStyle} value={rflTitle} onChange={(e) => setRflTitle(e.target.value)} placeholder="抽奖标题" />
               <input style={inputStyle} value={rflPrize} onChange={(e) => setRflPrize(e.target.value)} placeholder="奖品名称（群主自定义）" />
-              <input style={inputStyle} type="number" value={rflQuota} onChange={(e) => setRflQuota(e.target.value)} placeholder="中奖名额" />
+              
+  <div style={{ display: "flex", alignItems: "center", flex: 1, border: "1px solid rgba(128,128,128,0.3)", borderRadius: 10, padding: "0 12px" }}>
+    <input style={{ flex: 1, width: "100%", padding: "10px 0", border: "none", outline: "none", background: "transparent", color: "inherit", fontSize: 15 }} type="number" value={rflQuota} onChange={(e) => setRflQuota(e.target.value)} placeholder="中奖名额" />
+    <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: "nowrap" }}>名</span>
+  </div>
+
               <Button stretched onClick={handleCreateRaffle}>🎰 发布抽奖到群聊</Button>
             </div>
           </Section>
