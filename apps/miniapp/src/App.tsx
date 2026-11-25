@@ -587,7 +587,26 @@ export default function App() {
               <Button stretched onClick={async () => { const r = await apiFetch(`/api/events/${evtDetail.event.id}/join`, { method: 'POST' }); setMsg(r.ok ? '✅ 报名成功' : r.error); apiFetch(`/api/events/${evtDetail.event.id}`).then((d) => d.ok && setEvtDetail(d)); }}>{zh ? '✅ 报名' : '✅ RSVP'}</Button>
               <Button stretched mode="outline" onClick={async () => { const r = await apiFetch(`/api/events/${evtDetail.event.id}/cancel`, { method: 'POST' }); setMsg(r.ok ? '已取消' : r.error); apiFetch(`/api/events/${evtDetail.event.id}`).then((d) => d.ok && setEvtDetail(d)); }}>{zh ? '取消' : 'Cancel'}</Button>
             </div>
-            {evtDetail.members.map((m: any, i: number) => <Cell key={i} after={m.status}>{i + 1}. {m.first_name || m.telegram_id}</Cell>)}
+            {evtDetail.members.map((m: any, i: number) => (
+              <Cell
+                key={i}
+                subtitle={m.status}
+                after={
+                  <Button
+                    size="s"
+                    mode={m.checked_in ? 'filled' : 'bezeled'}
+                    onClick={async () => {
+                      const r = await apiFetch(`/api/events/${evtDetail.event.id}/members/${m.telegram_id}/checkin`, { method: 'POST' });
+                      if (r.ok) apiFetch(`/api/events/${evtDetail.event.id}`).then((d) => d.ok && setEvtDetail(d));
+                    }}
+                  >
+                    {m.checked_in ? (zh ? '✅ 已到场' : '✅ Here') : (zh ? '点名签到' : 'Check-in')}
+                  </Button>
+                }
+              >
+                {i + 1}. {m.first_name || m.telegram_id}
+              </Cell>
+            ))}
           </Section>
         )}
         {tab === 'ENGAGE' && subView === 'POLLS' && !targetId && (
@@ -729,6 +748,7 @@ export default function App() {
                   { label: zh ? '商城耗分' : 'PTS Spent', val: proStats?.totalPointsSpent ?? '-' },
                   { label: zh ? '兑换笔数' : 'Orders', val: proStats?.totalRedemptions ?? '-' },
                   { label: zh ? '卡密余量' : 'Keys Left', val: proStats?.remainingCodes ?? '-' },
+                  { label: zh ? '已拦广告' : 'Spam Blocked', val: proStats?.spamBlocked ?? '-' },
                 ].map((s, idx) => (
                   <div key={idx} style={{ padding: '9px 6px', borderRadius: 10, background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.16)', textAlign: 'center' }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#38bdf8' }}>{s.val}</div>
@@ -775,7 +795,29 @@ export default function App() {
                     {zh ? '🏆 最近抽奖中奖记录' : '🏆 Recent Raffle Winners'}
                   </div>
                   {recentWinners.map((w: any, i: number) => (
-                    <Cell key={i} subtitle={`${w.raffle_title} · 核销码：${w.claim_code}`} after={w.prize_name}>
+                    <Cell
+                      key={i}
+                      subtitle={`${w.raffle_title} · ${w.prize_name} · ${w.claim_code}`}
+                      after={
+                        w.is_claimed ? (
+                          <span style={{ fontSize: 11, color: '#4ade80', fontWeight: 600 }}>{zh ? '已核销' : 'Claimed'}</span>
+                        ) : (
+                          <Button
+                            size="s"
+                            mode="bezeled"
+                            onClick={async () => {
+                              const r = await apiFetch(`/api/groups/${selectedGroupId}/winners/${w.id}/claim`, { method: 'POST' });
+                              if (r.ok) {
+                                setRecentWinners((prev) => prev.map((x) => (x.id === w.id ? { ...x, is_claimed: 1 } : x)));
+                                setMsg(zh ? '✅ 已标记核销发奖' : '✅ Marked claimed');
+                              } else setMsg(`❌ ${r.error}`);
+                            }}
+                          >
+                            {zh ? '核销' : 'Mark'}
+                          </Button>
+                        )
+                      }
+                    >
                       🎉 {w.first_name || w.telegram_id}
                     </Cell>
                   ))}

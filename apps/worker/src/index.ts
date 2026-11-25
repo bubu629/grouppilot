@@ -628,6 +628,8 @@ app.post("/api/groups/:id/checkin", async (c) => {
   const now = Date.now();
 
   await c.env.DB.batch([
+    c.env.DB.prepare("INSERT INTO points_ledger (id, group_id, telegram_id, delta, reason, ref_id, created_at) VALUES (?, ?, ?, ?, 'CHECKIN', ?, ?)")
+      .bind(crypto.randomUUID(), groupId, user.id, points, today, now),
     c.env.DB.prepare("INSERT INTO checkins (id, group_id, telegram_id, checkin_date, streak, points_awarded, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
       .bind(crypto.randomUUID(), groupId, user.id, today, streak, points, now),
     c.env.DB.prepare(`
@@ -699,6 +701,8 @@ app.post("/api/groups/:id/store/redeem", async (c) => {
   const redeemCode = stockCode ? stockCode.code_text : ("GP-" + crypto.randomUUID().slice(0, 8).toUpperCase());
   const now = Date.now();
   const stmts: D1PreparedStatement[] = [
+    c.env.DB.prepare("INSERT INTO points_ledger (id, group_id, telegram_id, delta, reason, ref_id, created_at) VALUES (?, ?, ?, ?, 'REDEEM', ?, ?)")
+      .bind(crypto.randomUUID(), groupId, user.id, -item.cost_points, item.id, now),
     c.env.DB.prepare("UPDATE points_accounts SET balance = balance - ?, updated_at = ? WHERE group_id = ? AND telegram_id = ?")
       .bind(item.cost_points, now, groupId, user.id),
     c.env.DB.prepare("INSERT INTO store_redemptions (id, group_id, item_id, item_name, telegram_id, cost_points, redeem_code, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
@@ -1115,14 +1119,15 @@ app.get("/api/groups/:id/stats", async (c) => {
       totalRedemptions: orders?.c || 0,
       remainingCodes: codesLeft?.c || 0,
       activeBroadcasts: bcs?.c || 0,
+      spamBlocked: (await c.env.DB.prepare("SELECT COUNT(*) as c FROM spam_logs WHERE group_id = ?").bind(groupId).first<any>())?.c || 0,
     },
     recentWinners: (await c.env.DB.prepare(`
-      SELECT rw.telegram_id, u.first_name, rp.prize_name, rw.claim_code, r.title as raffle_title
-      FROM raffle_winners rw
+      SELECT rw.id, rw.is_claimed, rw.telegram_id, u.first_name, rp.prize_name, rw.claim_code, r.title as raffle_title
+      FROM raffle_entries rw
       JOIN raffles r ON rw.raffle_id = r.id
       LEFT JOIN raffle_prizes rp ON rw.prize_id = rp.id
       LEFT JOIN users u ON rw.telegram_id = u.telegram_id
-      WHERE r.group_id = ?
+      WHERE r.group_id = ? AND rw.claim_code IS NOT NULL
       ORDER BY rw.rowid DESC LIMIT 15
     `).bind(groupId).all()).results || [],
   });
@@ -1137,11 +1142,11 @@ app.get("/api/groups/:id/export/winners", async (c) => {
 
   const rows = await c.env.DB.prepare(`
     SELECT r.title as raffle_title, rw.telegram_id, u.first_name, rp.prize_name, rw.claim_code
-    FROM raffle_winners rw
+    FROM raffle_entries rw
     JOIN raffles r ON rw.raffle_id = r.id
     LEFT JOIN raffle_prizes rp ON rw.prize_id = rp.id
     LEFT JOIN users u ON rw.telegram_id = u.telegram_id
-    WHERE r.group_id = ?
+    WHERE r.group_id = ? AND rw.claim_code IS NOT NULL
     ORDER BY rw.rowid DESC
   `).bind(groupId).all<any>();
 
@@ -1189,6 +1194,30 @@ app.get("/api/groups/:id/export/events", async (c) => {
   form.append("document", new Blob(["\uFEFF" + csv], { type: "text/csv" }), "events_" + groupId + ".csv");
   await fetch(`https://api.telegram.org/bot${c.env.TELEGRAM_BOT_TOKEN}/sendDocument`, { method: "POST", body: form });
   return c.json({ ok: true, sentToDm: true });
+});
+
+
+// ==================== 13. 中奖核销 & 活动到场防鸽签到 ====================
+app.post("/api/groups/:id/winners/:wid/claim", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, groupId, user.id);
+  if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
+  await c.env.DB.prepare("UPDATE raffle_winners SET is_claimed = 1 WHERE id = ?").bind(c.req.param("wid")).run();
+  return c.json({ ok: true });
+});
+
+app.post("/api/events/:id/members/:uid/checkin", async (c) => {
+  const user = c.get("tgUser");
+  const eventId = c.req.param("id");
+  const targetUid = Number(c.req.param("uid"));
+  const evt = await c.env.DB.prepare("SELECT group_id FROM events WHERE id = ?").bind(eventId).first<any>();
+  if (!evt) return c.json({ ok: false, error: "EVENT_NOT_FOUND" }, 404);
+  const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, evt.group_id, user.id);
+  if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
+  await c.env.DB.prepare("UPDATE event_members SET checked_in = CASE WHEN checked_in = 1 THEN 0 ELSE 1 END WHERE event_id = ? AND telegram_id = ?")
+    .bind(eventId, targetUid).run();
+  return c.json({ ok: true });
 });
 
 // ==================== 4. Webhook & Cron ====================
