@@ -269,17 +269,17 @@ export default function App() {
             style={{ flex: 1, cursor: 'pointer', minWidth: 0 }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(128,128,128,0.2)' }}>{zh ? '顶置广告' : 'TOP AD'}</span>
+              <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(128,128,128,0.2)', whiteSpace: 'nowrap', flexShrink: 0 }}>{zh ? '顶置广告' : 'TOP AD'}</span>
               <span style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {ad ? ad.title : (zh ? '🔥 顶部独家赞助位招租 · 50 Stars/7天' : '🔥 Exclusive Top Slot · 50 Stars/7d')}
               </span>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
-            <button onClick={() => { setAdPos('TOP'); setShowAdBuy(true); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(255,152,0,0.16)', color: '#e65100', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={() => { setAdPos('TOP'); setShowAdBuy(true); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(255,152,0,0.16)', color: '#e65100', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
               {zh ? '投放' : 'Buy'}
             </button>
-            <button onClick={() => { setShowAdBuy(false); setSubView('NONE'); setTab('PRO'); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={() => { setShowAdBuy(false); setSubView('NONE'); setTab('PRO'); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
               {zh ? '去广告' : 'No Ads'}
             </button>
           </div>
@@ -309,11 +309,11 @@ export default function App() {
           </span>
           <div style={{ display: 'flex', gap: 4 }}>
             {activeAds.bottoms.length < 3 && (
-            <button onClick={() => { setAdPos('BOTTOM'); setShowAdBuy(true); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(255,152,0,0.16)', color: '#e65100', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={() => { setAdPos('BOTTOM'); setShowAdBuy(true); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(255,152,0,0.16)', color: '#e65100', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
               {zh ? '投放' : 'Buy'}
             </button>
           )}
-            <button onClick={() => { setShowAdBuy(false); setSubView('NONE'); setTab('PRO'); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={() => { setShowAdBuy(false); setSubView('NONE'); setTab('PRO'); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontSize: 11, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
               {zh ? '去广告' : 'No Ads'}
             </button>
           </div>
@@ -379,6 +379,23 @@ export default function App() {
 
   return (
     <AppRoot>
+
+      <style>{`
+        .gp-geo-shell {
+          min-height: 100vh;
+          background-color: #eef2f6;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%2364748b' stroke-opacity='0.18' stroke-width='1'%3E%3Cpath d='M0 0h56v56H0z'/%3E%3Cpath d='M0 56L56 0M28 0v56M0 28h56' stroke-opacity='0.09'/%3E%3Ccircle cx='28' cy='28' r='1.6' fill='%2364748b' fill-opacity='0.28' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
+          background-size: 56px 56px;
+          background-attachment: fixed;
+        }
+        .gp-geo-shell section {
+          border-radius: 14px !important;
+          overflow: hidden;
+          box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+        }
+      `}</style>
+      <div className="gp-geo-shell">
+
       {/* 顶部紧凑全局栏 */}
       <div style={{ position: 'sticky', top: 0, zIndex: 20, backdropFilter: 'blur(12px)', background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.88)', padding: '10px 12px', borderBottom: '1px solid rgba(128,128,128,0.15)', display: 'flex', alignItems: 'center', gap: 8 }}>
         <select
@@ -709,6 +726,7 @@ export default function App() {
           );
         })}
       </div>
+          </div>
     </AppRoot>
   );
 }
