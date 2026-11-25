@@ -273,7 +273,7 @@ export default function App() {
   };
 
   const GridCard = ({ icon, title, desc, badge, onClick }: any) => (
-    <div onClick={onClick} style={{ padding: 14, borderRadius: 14, background: 'rgba(128,128,128,0.08)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 6, position: 'relative' }}>
+    <div onClick={onClick} style={{ padding: 14, borderRadius: 14, background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.78)', backdropFilter: 'blur(10px)', border: '1px solid rgba(128,128,128,0.16)', boxShadow: '0 4px 14px rgba(0,0,0,0.04)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 6, position: 'relative' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: 28 }}>{icon}</span>
         {badge && <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 99, background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontWeight: 600 }}>{badge}</span>}
@@ -561,7 +561,7 @@ export default function App() {
                   <Button size="s" mode="bezeled" onClick={async () => { const r = await apiFetch('/api/pro/global-ban', { method: 'POST', body: JSON.stringify({ targetTelegramId: Number(banUid) }) }); setMsg(r.ok ? `🛡️ 已封 ${r.bannedCount} 群` : r.error); setBanUid(''); }}>{zh ? '拉黑' : 'Ban'}</Button>
                 </div>
                 <select style={inputStyle} value={codeItemId} onChange={(e) => setCodeItemId(e.target.value)}>
-                  {(storeData.items || []).map((it: any) => <option key={it.id} value={it.id}>{it.name}</option>)}
+                  {storeData.items?.length ? storeData.items.map((it: any) => <option key={it.id} value={it.id}>{it.name}</option>) : <option value="">{zh ? '请先在「福利」页上架商品' : 'Add an item in Store tab first'}</option>}
                 </select>
                 <textarea style={{ ...inputStyle, minHeight: 55 }} value={codesText} onChange={(e) => setCodesText(e.target.value)} placeholder={zh ? '每行粘贴一条卡密，兑换自动私发' : 'One key per line'} />
                 <div style={{ display: 'flex', gap: 8 }}>
