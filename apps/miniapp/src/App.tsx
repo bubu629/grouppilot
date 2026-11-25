@@ -332,7 +332,7 @@ export default function App() {
     localStorage.setItem('gp_lang', next);
   };
 
-  const [route, setRoute] = useState<'HOME' | 'EVENTS' | 'PACKETS' | 'RAFFLES' | 'POLLS' | 'ADMIN' | 'STORE' | 'GUARD'>('HOME');
+  const [route, setRoute] = useState<'HOME' | 'EVENTS' | 'PACKETS' | 'RAFFLES' | 'POLLS' | 'ADMIN' | 'STORE' | 'GUARD' | 'PRO_HUB'>('HOME');
   const [targetId, setTargetId] = useState<string | null>(null);
   const [tgUser, setTgUser] = useState<any>(null);
   const [apiState, setApiState] = useState<'checking' | 'connected' | 'abnormal' | 'connFailed'>('checking');
@@ -515,6 +515,93 @@ export default function App() {
     refreshGuard(selectedGroupId);
   };
 
+  
+  // Pro 专享 8 大功能状态
+  const [forceChannel, setForceChannel] = useState("");
+  const [customFooter, setCustomFooter] = useState("");
+  const [paidStars, setPaidStars] = useState("50");
+  const [inviteData, setInviteData] = useState<any>({ myLink: null, leaderboard: [] });
+  const [multiBcText, setMultiBcText] = useState("");
+  const [banUid, setBanUid] = useState("");
+  const [codeItemId, setCodeItemId] = useState("");
+  const [codesText, setCodesText] = useState("");
+
+  const refreshProHub = (gid: string) => {
+    if (!gid) return;
+    apiFetch(`/api/groups/${gid}/admin`).then((d) => {
+      if (d.ok && d.group) {
+        setForceChannel(d.group.force_channel_id || "");
+        setCustomFooter(d.group.custom_footer || "");
+        setPaidStars(String(d.group.paid_join_stars || 0));
+      }
+    });
+    apiFetch(`/api/groups/${gid}/invites`).then((d) => d.ok && setInviteData(d));
+    apiFetch(`/api/groups/${gid}/store`).then((d) => {
+      if (d.ok) {
+        setStoreData(d);
+        if (d.items?.length && !codeItemId) setCodeItemId(d.items[0].id);
+      }
+    });
+  };
+
+  const handleSaveProConfig = async () => {
+    const res = await apiFetch(`/api/groups/${selectedGroupId}/pro-config`, {
+      method: "POST",
+      body: JSON.stringify({ forceChannelId: forceChannel.trim(), customFooter: customFooter.trim(), paidJoinStars: Number(paidStars) || 0, paidJoinDays: 30 }),
+    });
+    setMsg(res.ok ? "✅ Pro 专属配置已保存！" : `❌ ${res.error}`);
+  };
+
+  const handleGenInvite = async () => {
+    const res = await apiFetch(`/api/groups/${selectedGroupId}/invites`, { method: "POST" });
+    if (res.ok) {
+      setMsg(`✅ 专属邀请链接已生成：${res.inviteUrl}`);
+      refreshProHub(selectedGroupId);
+    } else setMsg(`❌ ${res.error}`);
+  };
+
+  const handlePaidJoinTest = async () => {
+    const res = await apiFetch(`/api/groups/${selectedGroupId}/paid-join-invoice`, { method: "POST" });
+    if (!res.ok) return setMsg(`❌ ${res.error}`);
+    window.Telegram?.WebApp?.openInvoice?.(res.invoiceUrl, (st: string) => setMsg(`支付状态：${st}`));
+  };
+
+  const handleMultiBroadcast = async () => {
+    if (!multiBcText.trim()) return;
+    const res = await apiFetch("/api/pro/multi-broadcast", { method: "POST", body: JSON.stringify({ content: multiBcText.trim() }) });
+    if (res.ok) { setMultiBcText(""); setMsg(`✅ 已同步群发至 ${res.sentCount} 个 Pro 群！`); }
+    else setMsg(`❌ ${res.error}`);
+  };
+
+  const handleGlobalBan = async () => {
+    if (!banUid.trim()) return;
+    const res = await apiFetch("/api/pro/global-ban", { method: "POST", body: JSON.stringify({ targetTelegramId: Number(banUid) }) });
+    if (res.ok) { setBanUid(""); setMsg(`🛡️ 已在 ${res.bannedCount} 个 Pro 群同步拉黑该用户！`); }
+    else setMsg(`❌ ${res.error}`);
+  };
+
+  const handleImportCodes = async () => {
+    if (!codeItemId || !codesText.trim()) return;
+    const res = await apiFetch(`/api/groups/${selectedGroupId}/store/items/${codeItemId}/codes`, {
+      method: "POST",
+      body: JSON.stringify({ codesText }),
+    });
+    if (res.ok) { setCodesText(""); setMsg(`✅ 成功导入 ${res.imported} 条卡密，兑换时将自动私发！`); }
+    else setMsg(`❌ ${res.error}`);
+  };
+
+  const handleExportCsv = async () => {
+    const res = await apiFetch(`/api/groups/${selectedGroupId}/export/leaderboard`);
+    if (!res.ok) return setMsg(`❌ ${res.error}`);
+    const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `grouppilot_leaderboard_${selectedGroupId}.csv`;
+    a.click();
+    setMsg("✅ 积分榜 CSV 已导出！");
+  };
+
   const refreshAdmin = (gid: string) => {
     if (!gid) return;
     apiFetch(`/api/groups/${gid}/admin`).then((d) => {
@@ -535,6 +622,7 @@ export default function App() {
     if (route === 'ADMIN' && selectedGroupId) refreshAdmin(selectedGroupId);
     if (route === 'STORE' && selectedGroupId) refreshStore(selectedGroupId);
     if (route === 'GUARD' && selectedGroupId) refreshGuard(selectedGroupId);
+    if (route === 'PRO_HUB' && selectedGroupId) refreshProHub(selectedGroupId);
   }, [route, targetId, selectedGroupId]);
 
   const handleCreatePacket = async () => {
@@ -863,6 +951,16 @@ export default function App() {
                 onClick={() => { setTargetId(null); setRoute("GUARD"); }}
               >
                 {lang === "zh" ? "反垃圾与定时播报" : "Anti-Spam & Broadcasts"}
+              </Cell>
+
+              
+              <Cell
+                before={<span style={{ fontSize: 24 }}>💎</span>}
+                after={<Badge type="number">PRO</Badge>}
+                subtitle={lang === "zh" ? "邀请裂变 · 付费进群 · 强关频道 · 多群联动 · 自动发卡" : "Referrals · Paid Join · Force Sub · Multi-Group · Auto-Keys"}
+                onClick={() => { setTargetId(null); setRoute("PRO_HUB"); }}
+              >
+                {lang === "zh" ? "Pro 专享功能中心（8项）" : "Pro Feature Hub (8 Tools)"}
               </Cell>
 
               <Cell
@@ -1269,6 +1367,94 @@ export default function App() {
                   {b.content}
                 </Cell>
               ))}
+            </Section>
+          </>
+        )}
+
+        
+        {/* ==================== Pro 专享功能中心（8大功能） ==================== */}
+        {route === "PRO_HUB" && (
+          <>
+            <Section header={lang === "zh" ? "💎 Pro 专享中心（当前状态）" : "💎 Pro Feature Hub"}>
+              <GroupSelector />
+              <Cell
+                after={<Badge type="number">{isPro ? "PRO 👑" : "FREE"}</Badge>}
+                subtitle={isPro ? (lang === "zh" ? "已解锁全部 8 项 Pro 专享功能与无限配额" : "All 8 Pro features & unlimited quotas unlocked") : (lang === "zh" ? "升级 Pro 解锁以下全部 8 项高阶变现与涨粉工具" : "Upgrade to Pro to unlock all 8 features below")}
+              >
+                {lang === "zh" ? "当前群组权限" : "Group Tier"}
+              </Cell>
+              {!isPro && (
+                <div style={{ padding: "8px 16px" }}>
+                  <Button stretched onClick={() => setRoute("ADMIN")}>{lang === "zh" ? "⭐ 前往升级 Pro 会员" : "⭐ Upgrade to Pro"}</Button>
+                </div>
+              )}
+            </Section>
+
+            <Section header={lang === "zh" ? "1️⃣ 邀请裂变排行榜（拉新）" : "1️⃣ Referral Invite Leaderboard"}>
+              <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+                {inviteData.myLink ? (
+                  <div style={{ fontSize: 13, wordBreak: "break-all", padding: 8, borderRadius: 8, background: "rgba(128,128,128,0.1)" }}>
+                    {lang === "zh" ? "我的专属链接：" : "My Invite Link: "}{inviteData.myLink.invite_url}
+                  </div>
+                ) : (
+                  <Button stretched mode="bezeled" onClick={handleGenInvite}>{lang === "zh" ? "🔗 生成我的专属拉新链接" : "🔗 Generate My Invite Link"}</Button>
+                )}
+              </div>
+              {inviteData.leaderboard?.map((r: any, i: number) => (
+                <Cell key={i} after={`${r.join_count} ${lang === "zh" ? "人" : "joins"}`}>
+                  {i + 1}. {r.first_name || r.creator_id}
+                </Cell>
+              ))}
+            </Section>
+
+            <Section header={lang === "zh" ? "2️⃣ 付费进群 · 3️⃣ 强关频道 · 7️⃣ 白标去水印" : "2️⃣ Paid Join · 3️⃣ Force Sub · 7️⃣ White-Label"}>
+              <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ fontSize: 12, opacity: 0.7 }}>{lang === "zh" ? "强制关注频道（填 @频道用户名，留空不启用）" : "Force Join Channel (@username)"}</div>
+                <input style={inputStyle} value={forceChannel} onChange={(e) => setForceChannel(e.target.value)} placeholder="@your_channel" />
+
+                <div style={{ fontSize: 12, opacity: 0.7 }}>{lang === "zh" ? "自定义白标尾巴（替代默认水印）" : "Custom White-Label Footer"}</div>
+                <input style={inputStyle} value={customFooter} onChange={(e) => setCustomFooter(e.target.value)} placeholder="Powered by MyBrand" />
+
+                <div style={{ fontSize: 12, opacity: 0.7 }}>{lang === "zh" ? "付费进群定价（Stars，0 为关闭）" : "Paid Group Access Price (Stars)"}</div>
+                <div style={unitBoxStyle}>
+                  <input style={unitInputStyle} type="number" value={paidStars} onChange={(e) => setPaidStars(e.target.value)} />
+                  <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6 }}>Stars</span>
+                </div>
+
+                <Button stretched onClick={handleSaveProConfig}>{lang === "zh" ? "💾 保存 Pro 专属配置" : "💾 Save Pro Config"}</Button>
+                {Number(paidStars) > 0 && (
+                  <Button stretched mode="outline" onClick={handlePaidJoinTest}>{lang === "zh" ? "🎟️ 测试付费进群收银台" : "🎟️ Test Paid Join Checkout"}</Button>
+                )}
+              </div>
+            </Section>
+
+            <Section header={lang === "zh" ? "4️⃣ 多群联动（一键群发 + 跨群全局拉黑）" : "4️⃣ Multi-Group Sync (Broadcast & Global Ban)"}>
+              <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                <textarea style={{ ...inputStyle, minHeight: 65 }} value={multiBcText} onChange={(e) => setMultiBcText(e.target.value)} placeholder={lang === "zh" ? "输入要同步发到名下所有 Pro 群的消息" : "Broadcast to all your Pro groups"} />
+                <Button stretched mode="bezeled" onClick={handleMultiBroadcast}>{lang === "zh" ? "📡 一键同步群发所有 Pro 群" : "📡 Broadcast to All Pro Groups"}</Button>
+                <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                  <input style={{ ...inputStyle, flex: 2 }} type="number" value={banUid} onChange={(e) => setBanUid(e.target.value)} placeholder={lang === "zh" ? "输入骗子 Telegram ID" : "Target Telegram User ID"} />
+                  <Button size="s" onClick={handleGlobalBan}>{lang === "zh" ? "全局拉黑" : "Global Ban"}</Button>
+                </div>
+              </div>
+            </Section>
+
+            <Section header={lang === "zh" ? "5️⃣ 商城卡密批量导入（自动发货）" : "5️⃣ Batch Key Import (Auto-Delivery)"}>
+              <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                <select style={inputStyle} value={codeItemId} onChange={(e) => setCodeItemId(e.target.value)}>
+                  {(storeData.items || []).map((it: any) => (
+                    <option key={it.id} value={it.id}>{it.name}</option>
+                  ))}
+                </select>
+                <textarea style={{ ...inputStyle, minHeight: 75 }} value={codesText} onChange={(e) => setCodesText(e.target.value)} placeholder={lang === "zh" ? "每行粘贴一条卡密/兑换码，兑换时 Bot 自动私聊发货" : "One key/code per line"} />
+                <Button stretched mode="bezeled" onClick={handleImportCodes}>{lang === "zh" ? "📥 批量导入卡密库存" : "📥 Import Keys"}</Button>
+              </div>
+            </Section>
+
+            <Section header={lang === "zh" ? "6️⃣ 数据一键导出 & 8️⃣ 无限配额" : "6️⃣ CSV Export & 8️⃣ Unlimited Quotas"}>
+              <div style={{ padding: "8px 16px" }}>
+                <Button stretched onClick={handleExportCsv}>{lang === "zh" ? "📊 一键导出群积分榜 (CSV)" : "📊 Export Leaderboard (CSV)"}</Button>
+              </div>
             </Section>
           </>
         )}

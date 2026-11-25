@@ -547,7 +547,7 @@ app.post("/api/polls/:id/vote", async (c) => {
 
 app.get("/api/groups/:id/admin", async (c) => {
   const groupId = Number(c.req.param("id"));
-  const group = await c.env.DB.prepare("SELECT group_id, title, plan, welcome_enabled, welcome_text, anti_spam_enabled, ban_links, banned_keywords FROM groups WHERE group_id = ?").bind(groupId).first();
+  const group = await c.env.DB.prepare("SELECT group_id, title, plan, welcome_enabled, welcome_text, anti_spam_enabled, ban_links, banned_keywords, force_channel_id, custom_footer, paid_join_stars, paid_join_days FROM groups WHERE group_id = ?").bind(groupId).first();
   if (!group) return c.json({ ok: false, error: "NOT_FOUND" }, 404);
   const leaderboard = await c.env.DB.prepare(`
     SELECT p.telegram_id, p.balance, p.total_earned, u.first_name
@@ -607,6 +607,14 @@ app.post("/api/groups/:id/checkin", async (c) => {
   const { isMember } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, groupId, user.id);
   if (!isMember) return c.json({ ok: false, error: "NOT_GROUP_MEMBER" }, 403);
 
+  const grpCfg = await c.env.DB.prepare("SELECT plan, force_channel_id FROM groups WHERE group_id = ?").bind(groupId).first<any>();
+  if (grpCfg?.plan === "PRO" && grpCfg.force_channel_id) {
+    const chCheck = await tgApi(c.env.TELEGRAM_BOT_TOKEN, "getChatMember", { chat_id: grpCfg.force_channel_id, user_id: user.id });
+    const st = chCheck?.result?.status;
+    if (!chCheck.ok || !["creator", "administrator", "member", "restricted"].includes(st)) {
+      return c.json({ ok: false, error: "MUST_JOIN_CHANNEL:" + grpCfg.force_channel_id }, 403);
+    }
+  }
   const today = new Date().toISOString().slice(0, 10);
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
   const existing = await c.env.DB.prepare("SELECT id FROM checkins WHERE group_id = ? AND telegram_id = ? AND checkin_date = ?")
@@ -654,6 +662,11 @@ app.post("/api/groups/:id/store/items", async (c) => {
   if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
 
   const body = await c.req.json();
+  const grpPlan = await c.env.DB.prepare("SELECT plan FROM groups WHERE group_id = ?").bind(groupId).first<any>();
+  if (grpPlan?.plan !== "PRO") {
+    const cnt = await c.env.DB.prepare("SELECT COUNT(*) as c FROM store_items WHERE group_id = ?").bind(groupId).first<any>();
+    if ((cnt?.c || 0) >= 3) return c.json({ ok: false, error: "PRO_REQUIRED_MAX_3_ITEMS" }, 403);
+  }
   const id = crypto.randomUUID();
   await c.env.DB.prepare("INSERT INTO store_items (id, group_id, name, cost_points, stock, created_at) VALUES (?, ?, ?, ?, ?, ?)")
     .bind(id, groupId, body.name, Math.max(1, Number(body.costPoints) || 100), Number(body.stock ?? -1), Date.now()).run();
@@ -672,7 +685,8 @@ app.post("/api/groups/:id/store/redeem", async (c) => {
     .bind(groupId, user.id).first<any>();
   if (!acct || acct.balance < item.cost_points) return c.json({ ok: false, error: "INSUFFICIENT_POINTS" }, 400);
 
-  const redeemCode = "GP-" + crypto.randomUUID().slice(0, 8).toUpperCase();
+  const stockCode = await c.env.DB.prepare("SELECT id, code_text FROM store_codes WHERE item_id = ? AND used_by = 0 LIMIT 1").bind(item.id).first<any>();
+  const redeemCode = stockCode ? stockCode.code_text : ("GP-" + crypto.randomUUID().slice(0, 8).toUpperCase());
   const now = Date.now();
   const stmts: D1PreparedStatement[] = [
     c.env.DB.prepare("UPDATE points_accounts SET balance = balance - ?, updated_at = ? WHERE group_id = ? AND telegram_id = ?")
@@ -683,8 +697,18 @@ app.post("/api/groups/:id/store/redeem", async (c) => {
   if (item.stock > 0) {
     stmts.push(c.env.DB.prepare("UPDATE store_items SET stock = stock - 1 WHERE id = ?").bind(item.id));
   }
+  if (stockCode) {
+    stmts.push(c.env.DB.prepare("UPDATE store_codes SET used_by = ?, used_at = ? WHERE id = ?").bind(user.id, now, stockCode.id));
+  }
   await c.env.DB.batch(stmts);
-  return c.json({ ok: true, redeemCode });
+  if (stockCode) {
+    await tgApi(c.env.TELEGRAM_BOT_TOKEN, "sendMessage", {
+      chat_id: user.id,
+      text: "🎁 *积分商城自动发货成功*\n\n商品：" + item.name + "\n你的专属卡密：`" + redeemCode + "`",
+      parse_mode: "Markdown",
+    }).catch(() => {});
+  }
+  return c.json({ ok: true, redeemCode, autoDelivered: Boolean(stockCode) });
 });
 
 app.post("/api/groups/:id/antispam", async (c) => {
@@ -712,6 +736,11 @@ app.post("/api/groups/:id/broadcasts", async (c) => {
   if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
 
   const body = await c.req.json();
+  const grpPlan = await c.env.DB.prepare("SELECT plan FROM groups WHERE group_id = ?").bind(groupId).first<any>();
+  if (grpPlan?.plan !== "PRO") {
+    const cnt = await c.env.DB.prepare("SELECT COUNT(*) as c FROM group_broadcasts WHERE group_id = ?").bind(groupId).first<any>();
+    if ((cnt?.c || 0) >= 1) return c.json({ ok: false, error: "PRO_REQUIRED_MAX_1_BROADCAST" }, 403);
+  }
   const id = crypto.randomUUID();
   const sent = await tgApi(c.env.TELEGRAM_BOT_TOKEN, "sendMessage", {
     chat_id: groupId,
@@ -732,6 +761,147 @@ app.delete("/api/groups/:id/broadcasts/:bid", async (c) => {
 
   await c.env.DB.prepare("DELETE FROM group_broadcasts WHERE id = ? AND group_id = ?").bind(c.req.param("bid"), groupId).run();
   return c.json({ ok: true });
+});
+
+
+// ==================== 9. Pro 专享 8 大功能接口 ====================
+app.post("/api/groups/:id/pro-config", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, groupId, user.id);
+  if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
+  const grp = await c.env.DB.prepare("SELECT plan FROM groups WHERE group_id = ?").bind(groupId).first<any>();
+  if (grp?.plan !== "PRO") return c.json({ ok: false, error: "PRO_REQUIRED" }, 403);
+
+  const body = await c.req.json();
+  await c.env.DB.prepare("UPDATE groups SET force_channel_id = ?, custom_footer = ?, paid_join_stars = ?, paid_join_days = ?, updated_at = ? WHERE group_id = ?")
+    .bind(body.forceChannelId || "", body.customFooter || "", Number(body.paidJoinStars) || 0, Number(body.paidJoinDays) || 30, Date.now(), groupId).run();
+  return c.json({ ok: true });
+});
+
+// Pro 1: 邀请裂变（生成专属链接 + 排行）
+app.get("/api/groups/:id/invites", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const myLink = await c.env.DB.prepare("SELECT * FROM invite_links WHERE group_id = ? AND creator_id = ?").bind(groupId, user.id).first();
+  const top = await c.env.DB.prepare(`
+    SELECT i.creator_id, i.join_count, u.first_name
+    FROM invite_links i LEFT JOIN users u ON i.creator_id = u.telegram_id
+    WHERE i.group_id = ? ORDER BY i.join_count DESC LIMIT 10
+  `).bind(groupId).all();
+  return c.json({ ok: true, myLink, leaderboard: top.results || [] });
+});
+
+app.post("/api/groups/:id/invites", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const grp = await c.env.DB.prepare("SELECT plan FROM groups WHERE group_id = ?").bind(groupId).first<any>();
+  if (grp?.plan !== "PRO") return c.json({ ok: false, error: "PRO_REQUIRED" }, 403);
+
+  const existing = await c.env.DB.prepare("SELECT invite_url FROM invite_links WHERE group_id = ? AND creator_id = ?").bind(groupId, user.id).first<any>();
+  if (existing) return c.json({ ok: true, inviteUrl: existing.invite_url });
+
+  const res = await tgApi(c.env.TELEGRAM_BOT_TOKEN, "createChatInviteLink", {
+    chat_id: groupId,
+    name: "ref_" + user.id,
+  });
+  if (!res.ok) return c.json({ ok: false, error: res.description || "CREATE_LINK_FAILED" }, 400);
+  const url = res.result.invite_link;
+  await c.env.DB.prepare("INSERT INTO invite_links (id, group_id, creator_id, invite_url, join_count, created_at) VALUES (?, ?, ?, ?, 0, ?)")
+    .bind(crypto.randomUUID(), groupId, user.id, url, Date.now()).run();
+  return c.json({ ok: true, inviteUrl: url });
+});
+
+// Pro 2: 付费进群 Stars 订单
+app.post("/api/groups/:id/paid-join-invoice", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const grp = await c.env.DB.prepare("SELECT plan, title, paid_join_stars, paid_join_days FROM groups WHERE group_id = ?").bind(groupId).first<any>();
+  if (grp?.plan !== "PRO" || !grp.paid_join_stars) return c.json({ ok: false, error: "PAID_JOIN_NOT_ENABLED" }, 400);
+
+  const res = await tgApi(c.env.TELEGRAM_BOT_TOKEN, "createInvoiceLink", {
+    title: "VIP 进群通行证：" + grp.title,
+    description: "支付后 Bot 将立即私发一次性专属进群链接（有效期 " + (grp.paid_join_days || 30) + " 天）",
+    payload: "join:" + groupId + ":" + user.id,
+    provider_token: "",
+    currency: "XTR",
+    prices: [{ label: "VIP 进群", amount: grp.paid_join_stars }],
+  });
+  if (!res.ok) return c.json({ ok: false, error: res.description || "INVOICE_FAILED" }, 400);
+  return c.json({ ok: true, invoiceUrl: res.result });
+});
+
+// Pro 4: 多群联动（一键群发 + 跨群全局拉黑）
+app.post("/api/pro/multi-broadcast", async (c) => {
+  const user = c.get("tgUser");
+  const body = await c.req.json();
+  const proGroups = await c.env.DB.prepare("SELECT group_id FROM groups WHERE plan = 'PRO'").all<any>();
+  let sentCount = 0;
+  for (const g of proGroups.results || []) {
+    const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, g.group_id, user.id);
+    if (isAdmin) {
+      await tgApi(c.env.TELEGRAM_BOT_TOKEN, "sendMessage", { chat_id: g.group_id, text: "📢 " + body.content }).catch(() => {});
+      sentCount++;
+    }
+  }
+  return c.json({ ok: true, sentCount });
+});
+
+app.post("/api/pro/global-ban", async (c) => {
+  const user = c.get("tgUser");
+  const body = await c.req.json();
+  const targetId = Number(body.targetTelegramId);
+  if (!targetId) return c.json({ ok: false, error: "INVALID_USER_ID" }, 400);
+
+  const proGroups = await c.env.DB.prepare("SELECT group_id FROM groups WHERE plan = 'PRO'").all<any>();
+  let bannedCount = 0;
+  for (const g of proGroups.results || []) {
+    const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, g.group_id, user.id);
+    if (isAdmin) {
+      await tgApi(c.env.TELEGRAM_BOT_TOKEN, "banChatMember", { chat_id: g.group_id, user_id: targetId }).catch(() => {});
+      bannedCount++;
+    }
+  }
+  await c.env.DB.prepare("INSERT OR REPLACE INTO global_blacklist (owner_id, banned_telegram_id, reason, created_at) VALUES (?, ?, ?, ?)")
+    .bind(user.id, targetId, body.reason || "Global Ban", Date.now()).run();
+  return c.json({ ok: true, bannedCount });
+});
+
+// Pro 5: 商城卡密批量导入
+app.post("/api/groups/:id/store/items/:itemId/codes", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const itemId = c.req.param("itemId");
+  const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, groupId, user.id);
+  if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
+  const grp = await c.env.DB.prepare("SELECT plan FROM groups WHERE group_id = ?").bind(groupId).first<any>();
+  if (grp?.plan !== "PRO") return c.json({ ok: false, error: "PRO_REQUIRED" }, 403);
+
+  const body = await c.req.json();
+  const codes: string[] = (body.codesText || "").split("\n").map((s: string) => s.trim()).filter(Boolean);
+  if (!codes.length) return c.json({ ok: false, error: "NO_CODES" }, 400);
+
+  const stmts = codes.map((codeText) =>
+    c.env.DB.prepare("INSERT INTO store_codes (id, group_id, item_id, code_text) VALUES (?, ?, ?, ?)").bind(crypto.randomUUID(), groupId, itemId, codeText)
+  );
+  await c.env.DB.batch(stmts);
+  return c.json({ ok: true, imported: codes.length });
+});
+
+// Pro 6: 数据一键导出 CSV
+app.get("/api/groups/:id/export/leaderboard", async (c) => {
+  const groupId = Number(c.req.param("id"));
+  const grp = await c.env.DB.prepare("SELECT plan FROM groups WHERE group_id = ?").bind(groupId).first<any>();
+  if (grp?.plan !== "PRO") return c.json({ ok: false, error: "PRO_REQUIRED" }, 403);
+
+  const rows = await c.env.DB.prepare(`
+    SELECT p.telegram_id, u.first_name, p.balance, p.total_earned
+    FROM points_accounts p LEFT JOIN users u ON p.telegram_id = u.telegram_id
+    WHERE p.group_id = ? ORDER BY p.balance DESC
+  `).bind(groupId).all<any>();
+
+  const csv = ["telegram_id,name,balance,total_earned", ...(rows.results || []).map((r) => `${r.telegram_id},"${(r.first_name || "").replace(/"/g, "")}",${r.balance},${r.total_earned}`)].join("\n");
+  return c.json({ ok: true, csv });
 });
 
 // ==================== 4. Webhook & Cron ====================
