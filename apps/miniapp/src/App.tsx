@@ -332,7 +332,7 @@ export default function App() {
     localStorage.setItem('gp_lang', next);
   };
 
-  const [route, setRoute] = useState<'HOME' | 'EVENTS' | 'PACKETS' | 'RAFFLES' | 'POLLS' | 'ADMIN'>('HOME');
+  const [route, setRoute] = useState<'HOME' | 'EVENTS' | 'PACKETS' | 'RAFFLES' | 'POLLS' | 'ADMIN' | 'STORE' | 'GUARD'>('HOME');
   const [targetId, setTargetId] = useState<string | null>(null);
   const [tgUser, setTgUser] = useState<any>(null);
   const [apiState, setApiState] = useState<'checking' | 'connected' | 'abnormal' | 'connFailed'>('checking');
@@ -427,6 +427,94 @@ export default function App() {
     });
   }, []);
 
+  
+  // 签到与积分商城
+  const [storeData, setStoreData] = useState<any>({ balance: 0, items: [], orders: [] });
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemCost, setNewItemCost] = useState("100");
+  // 反垃圾与定时播报
+  const [antiSpam, setAntiSpam] = useState(false);
+  const [banLinks, setBanLinks] = useState(true);
+  const [bannedKws, setBannedKws] = useState("");
+  const [broadcasts, setBroadcasts] = useState<any[]>([]);
+  const [bcText, setBcText] = useState("");
+  const [bcHours, setBcHours] = useState("24");
+
+  const refreshStore = (gid: string) => {
+    if (!gid) return;
+    apiFetch(`/api/groups/${gid}/store`).then((d) => d.ok && setStoreData(d));
+  };
+  const refreshGuard = (gid: string) => {
+    if (!gid) return;
+    apiFetch(`/api/groups/${gid}/admin`).then((d) => {
+      if (d.ok && d.group) {
+        setAntiSpam(Boolean(d.group.anti_spam_enabled));
+        setBanLinks(Boolean(d.group.ban_links));
+        setBannedKws(d.group.banned_keywords || "");
+      }
+    });
+    apiFetch(`/api/groups/${gid}/broadcasts`).then((d) => d.ok && setBroadcasts(d.broadcasts || []));
+  };
+
+  const handleCheckin = async () => {
+    if (!selectedGroupId) return setMsg(t("needGroup"));
+    const res = await apiFetch(`/api/groups/${selectedGroupId}/checkin`, { method: "POST" });
+    if (res.ok) {
+      setMsg(lang === "zh" ? `🎉 签到成功！连续 ${res.streak} 天，获得 +${res.points} 积分` : `🎉 Checked in! Streak: ${res.streak}d (+${res.points} PTS)`);
+      refreshStore(selectedGroupId);
+    } else setMsg(`${t("tip")}: ${res.error}`);
+  };
+
+  const handleAddItem = async () => {
+    if (!selectedGroupId || !newItemName.trim()) return;
+    const res = await apiFetch(`/api/groups/${selectedGroupId}/store/items`, {
+      method: "POST",
+      body: JSON.stringify({ name: newItemName.trim(), costPoints: Number(newItemCost) || 100 }),
+    });
+    if (res.ok) {
+      setNewItemName("");
+      setMsg(lang === "zh" ? "✅ 商品已上架" : "✅ Item added");
+      refreshStore(selectedGroupId);
+    } else setMsg(`❌ ${res.error}`);
+  };
+
+  const handleRedeem = async (itemId: string) => {
+    const res = await apiFetch(`/api/groups/${selectedGroupId}/store/redeem`, {
+      method: "POST",
+      body: JSON.stringify({ itemId }),
+    });
+    if (res.ok) {
+      setMsg(lang === "zh" ? `🎉 兑换成功！核销码：${res.redeemCode}` : `🎉 Redeemed! Code: ${res.redeemCode}`);
+      refreshStore(selectedGroupId);
+    } else setMsg(`${t("tip")}: ${res.error}`);
+  };
+
+  const handleSaveAntiSpam = async () => {
+    const res = await apiFetch(`/api/groups/${selectedGroupId}/antispam`, {
+      method: "POST",
+      body: JSON.stringify({ enabled: antiSpam, banLinks, keywords: bannedKws }),
+    });
+    setMsg(res.ok ? (lang === "zh" ? "✅ 反垃圾规则已保存" : "✅ Anti-spam saved") : `❌ ${res.error}`);
+  };
+
+  const handleAddBroadcast = async () => {
+    if (!bcText.trim()) return;
+    const res = await apiFetch(`/api/groups/${selectedGroupId}/broadcasts`, {
+      method: "POST",
+      body: JSON.stringify({ content: bcText.trim(), intervalHours: Number(bcHours) || 24 }),
+    });
+    if (res.ok) {
+      setBcText("");
+      setMsg(lang === "zh" ? "✅ 已立即发送并开启定时周期播报" : "✅ Broadcast posted & scheduled");
+      refreshGuard(selectedGroupId);
+    } else setMsg(`❌ ${res.error}`);
+  };
+
+  const handleDeleteBroadcast = async (bid: string) => {
+    await apiFetch(`/api/groups/${selectedGroupId}/broadcasts/${bid}`, { method: "DELETE" });
+    refreshGuard(selectedGroupId);
+  };
+
   const refreshAdmin = (gid: string) => {
     if (!gid) return;
     apiFetch(`/api/groups/${gid}/admin`).then((d) => {
@@ -445,6 +533,8 @@ export default function App() {
     if (route === 'EVENTS' && targetId) apiFetch(`/api/events/${targetId}`).then((d) => d.ok && setEvtDetail(d));
     if (route === 'POLLS' && targetId) apiFetch(`/api/polls/${targetId}`).then((d) => d.ok && setPolDetail(d));
     if (route === 'ADMIN' && selectedGroupId) refreshAdmin(selectedGroupId);
+    if (route === 'STORE' && selectedGroupId) refreshStore(selectedGroupId);
+    if (route === 'GUARD' && selectedGroupId) refreshGuard(selectedGroupId);
   }, [route, targetId, selectedGroupId]);
 
   const handleCreatePacket = async () => {
@@ -739,6 +829,16 @@ export default function App() {
               >
                 {t('pktTitle')}
               </Cell>
+              
+              <Cell
+                before={<span style={{ fontSize: 24 }}>🎁</span>}
+                after={<Badge type="number">NEW</Badge>}
+                subtitle={lang === "zh" ? "每日签到领积分 · 兑换群主福利" : "Daily Check-in · Redeem Rewards"}
+                onClick={() => { setTargetId(null); setRoute("STORE"); }}
+              >
+                {lang === "zh" ? "每日签到与积分商城" : "Check-in & Points Store"}
+              </Cell>
+
               <Cell
                 before={<span style={{ fontSize: 24 }}>🎰</span>}
                 after={<Badge type="number">2.0</Badge>}
@@ -756,6 +856,15 @@ export default function App() {
               <Cell before={<span style={{ fontSize: 24 }}>📊</span>} subtitle={t('polSub')} onClick={() => { setTargetId(null); setRoute('POLLS'); }}>
                 {t('polTitle')}
               </Cell>
+              
+              <Cell
+                before={<span style={{ fontSize: 24 }}>🛡️</span>}
+                subtitle={lang === "zh" ? "防外链炸群 · 定时周期播报" : "Anti-Spam Filter · Auto Broadcast"}
+                onClick={() => { setTargetId(null); setRoute("GUARD"); }}
+              >
+                {lang === "zh" ? "反垃圾与定时播报" : "Anti-Spam & Broadcasts"}
+              </Cell>
+
               <Cell
                 before={<span style={{ fontSize: 24 }}>👑</span>}
                 after={<Badge type="dot" />}
@@ -1061,6 +1170,109 @@ export default function App() {
             </Section>
           </>
         )}
+        
+        {/* ==================== 每日签到与积分商城 ==================== */}
+        {route === "STORE" && (
+          <>
+            <Section header={lang === "zh" ? "📅 每日签到" : "📅 Daily Check-in"}>
+              <GroupSelector />
+              <Cell subtitle={lang === "zh" ? "连续签到 3 天 +20 分，7 天 +30 分" : "3-day streak +20 PTS, 7-day +30 PTS"}>
+                {lang === "zh" ? `当前可用积分：${storeData.balance} 积分` : `Your Balance: ${storeData.balance} PTS`}
+              </Cell>
+              <div style={{ padding: "8px 16px" }}>
+                <Button stretched onClick={handleCheckin}>
+                  {lang === "zh" ? "✅ 立即每日签到" : "✅ Check In Today"}
+                </Button>
+              </div>
+            </Section>
+
+            <Section header={lang === "zh" ? "🎁 群积分商城" : "🎁 Points Store"}>
+              {storeData.items?.length > 0 ? (
+                storeData.items.map((it: any) => (
+                  <Cell
+                    key={it.id}
+                    subtitle={`${it.cost_points} ${t("pktUnitPts")}`}
+                    after={<Button size="s" onClick={() => handleRedeem(it.id)}>{lang === "zh" ? "兑换" : "Redeem"}</Button>}
+                  >
+                    {it.name}
+                  </Cell>
+                ))
+              ) : (
+                <Cell>{lang === "zh" ? "群主暂未上架商品" : "No items yet"}</Cell>
+              )}
+              <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ fontSize: 12, opacity: 0.65 }}>{lang === "zh" ? "群主上架新商品" : "Admin: Add Store Item"}</div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input style={{ ...inputStyle, flex: 2 }} value={newItemName} onChange={(e) => setNewItemName(e.target.value)} placeholder={lang === "zh" ? "商品名称（如：月卡兑换码）" : "Item name"} />
+                  <input style={{ ...inputStyle, flex: 1 }} type="number" value={newItemCost} onChange={(e) => setNewItemCost(e.target.value)} placeholder="PTS" />
+                </div>
+                <Button size="s" mode="bezeled" onClick={handleAddItem}>{lang === "zh" ? "+ 上架商品" : "+ Add Item"}</Button>
+              </div>
+            </Section>
+
+            {storeData.orders?.length > 0 && (
+              <Section header={lang === "zh" ? "🧾 我的兑换记录" : "🧾 My Redemptions"}>
+                {storeData.orders.map((o: any) => (
+                  <Cell key={o.id} subtitle={`${t("rflClaimCode")}${o.redeem_code}`} after={`-${o.cost_points}`}>
+                    {o.item_name}
+                  </Cell>
+                ))}
+              </Section>
+            )}
+          </>
+        )}
+
+        {/* ==================== 反垃圾与定时播报 ==================== */}
+        {route === "GUARD" && (
+          <>
+            <Section header={lang === "zh" ? "🛡️ 反垃圾广告与防外链" : "🛡️ Anti-Spam & Link Filter"}>
+              <GroupSelector />
+              <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
+                  <input type="checkbox" checked={antiSpam} onChange={(e) => setAntiSpam(e.target.checked)} />
+                  {lang === "zh" ? "开启自动删帖拦截（放行群管理员）" : "Enable Auto-Delete Filter (Admins exempt)"}
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
+                  <input type="checkbox" checked={banLinks} onChange={(e) => setBanLinks(e.target.checked)} />
+                  {lang === "zh" ? "自动删除网址链接、t.me 频道与 @广告" : "Auto-delete URLs, t.me links & @mentions"}
+                </label>
+                <textarea
+                  style={{ ...inputStyle, minHeight: 70 }}
+                  value={bannedKws}
+                  onChange={(e) => setBannedKws(e.target.value)}
+                  placeholder={lang === "zh" ? "违禁词（用逗号分隔，例如：兼职,刷单,加微信）" : "Banned keywords (comma-separated)"}
+                />
+                <Button stretched onClick={handleSaveAntiSpam}>{lang === "zh" ? "💾 保存反垃圾规则" : "💾 Save Anti-Spam Rules"}</Button>
+              </div>
+            </Section>
+
+            <Section header={lang === "zh" ? "📢 定时周期播报（发新删旧防刷屏）" : "📢 Scheduled Broadcasts (Auto-replace)"}>
+              <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                <textarea
+                  style={{ ...inputStyle, minHeight: 75 }}
+                  value={bcText}
+                  onChange={(e) => setBcText(e.target.value)}
+                  placeholder={lang === "zh" ? "输入要定时发送到群里的公告或推广文案" : "Broadcast message content"}
+                />
+                <div style={unitBoxStyle}>
+                  <input style={unitInputStyle} type="number" value={bcHours} onChange={(e) => setBcHours(e.target.value)} />
+                  <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6 }}>{lang === "zh" ? "小时/次" : "hours"}</span>
+                </div>
+                <Button stretched onClick={handleAddBroadcast}>{lang === "zh" ? "📢 立即发送并开启定时" : "📢 Post & Schedule"}</Button>
+              </div>
+              {broadcasts.map((b: any) => (
+                <Cell
+                  key={b.id}
+                  subtitle={lang === "zh" ? `每 ${b.interval_hours} 小时自动播报` : `Every ${b.interval_hours}h`}
+                  after={<Button size="s" mode="bezeled" onClick={() => handleDeleteBroadcast(b.id)}>{lang === "zh" ? "删除" : "Del"}</Button>}
+                >
+                  {b.content}
+                </Cell>
+              ))}
+            </Section>
+          </>
+        )}
+
         <AdSlot pos="BOTTOM" />
       </div>
     </AppRoot>

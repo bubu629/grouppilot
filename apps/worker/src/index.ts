@@ -547,7 +547,7 @@ app.post("/api/polls/:id/vote", async (c) => {
 
 app.get("/api/groups/:id/admin", async (c) => {
   const groupId = Number(c.req.param("id"));
-  const group = await c.env.DB.prepare("SELECT group_id, title, plan, welcome_enabled, welcome_text FROM groups WHERE group_id = ?").bind(groupId).first();
+  const group = await c.env.DB.prepare("SELECT group_id, title, plan, welcome_enabled, welcome_text, anti_spam_enabled, ban_links, banned_keywords FROM groups WHERE group_id = ?").bind(groupId).first();
   if (!group) return c.json({ ok: false, error: "NOT_FOUND" }, 404);
   const leaderboard = await c.env.DB.prepare(`
     SELECT p.telegram_id, p.balance, p.total_earned, u.first_name
@@ -597,6 +597,141 @@ app.post("/api/payments/pro-invoice", async (c) => {
 
   if (!res.ok) return c.json({ ok: false, error: res.description || "INVOICE_FAILED" }, 400);
   return c.json({ ok: true, invoiceUrl: res.result });
+});
+
+
+// ==================== 8. 免费刚需三件套：签到商城 / 反垃圾 / 定时播报 ====================
+app.post("/api/groups/:id/checkin", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const { isMember } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, groupId, user.id);
+  if (!isMember) return c.json({ ok: false, error: "NOT_GROUP_MEMBER" }, 403);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const existing = await c.env.DB.prepare("SELECT id FROM checkins WHERE group_id = ? AND telegram_id = ? AND checkin_date = ?")
+    .bind(groupId, user.id, today).first();
+  if (existing) return c.json({ ok: false, error: "ALREADY_CHECKED_IN_TODAY" }, 400);
+
+  const prev = await c.env.DB.prepare("SELECT streak FROM checkins WHERE group_id = ? AND telegram_id = ? AND checkin_date = ?")
+    .bind(groupId, user.id, yesterday).first<any>();
+  const streak = prev ? prev.streak + 1 : 1;
+  const points = streak >= 7 ? 30 : streak >= 3 ? 20 : 10;
+  const now = Date.now();
+
+  await c.env.DB.batch([
+    c.env.DB.prepare("INSERT INTO checkins (id, group_id, telegram_id, checkin_date, streak, points_awarded, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .bind(crypto.randomUUID(), groupId, user.id, today, streak, points, now),
+    c.env.DB.prepare(`
+      INSERT INTO points_accounts (group_id, telegram_id, balance, total_earned, updated_at)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(group_id, telegram_id) DO UPDATE SET
+        balance = balance + excluded.balance,
+        total_earned = total_earned + excluded.total_earned,
+        updated_at = excluded.updated_at
+    `).bind(groupId, user.id, points, points, now),
+  ]);
+
+  return c.json({ ok: true, streak, points });
+});
+
+app.get("/api/groups/:id/store", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const acct = await c.env.DB.prepare("SELECT balance FROM points_accounts WHERE group_id = ? AND telegram_id = ?")
+    .bind(groupId, user.id).first<any>();
+  const items = await c.env.DB.prepare("SELECT * FROM store_items WHERE group_id = ? ORDER BY created_at DESC")
+    .bind(groupId).all();
+  const myOrders = await c.env.DB.prepare("SELECT * FROM store_redemptions WHERE group_id = ? AND telegram_id = ? ORDER BY created_at DESC LIMIT 10")
+    .bind(groupId, user.id).all();
+  return c.json({ ok: true, balance: acct?.balance || 0, items: items.results || [], orders: myOrders.results || [] });
+});
+
+app.post("/api/groups/:id/store/items", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, groupId, user.id);
+  if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
+
+  const body = await c.req.json();
+  const id = crypto.randomUUID();
+  await c.env.DB.prepare("INSERT INTO store_items (id, group_id, name, cost_points, stock, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+    .bind(id, groupId, body.name, Math.max(1, Number(body.costPoints) || 100), Number(body.stock ?? -1), Date.now()).run();
+  return c.json({ ok: true, id });
+});
+
+app.post("/api/groups/:id/store/redeem", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const body = await c.req.json();
+  const item = await c.env.DB.prepare("SELECT * FROM store_items WHERE id = ? AND group_id = ?").bind(body.itemId, groupId).first<any>();
+  if (!item) return c.json({ ok: false, error: "ITEM_NOT_FOUND" }, 404);
+  if (item.stock === 0) return c.json({ ok: false, error: "OUT_OF_STOCK" }, 400);
+
+  const acct = await c.env.DB.prepare("SELECT balance FROM points_accounts WHERE group_id = ? AND telegram_id = ?")
+    .bind(groupId, user.id).first<any>();
+  if (!acct || acct.balance < item.cost_points) return c.json({ ok: false, error: "INSUFFICIENT_POINTS" }, 400);
+
+  const redeemCode = "GP-" + crypto.randomUUID().slice(0, 8).toUpperCase();
+  const now = Date.now();
+  const stmts: D1PreparedStatement[] = [
+    c.env.DB.prepare("UPDATE points_accounts SET balance = balance - ?, updated_at = ? WHERE group_id = ? AND telegram_id = ?")
+      .bind(item.cost_points, now, groupId, user.id),
+    c.env.DB.prepare("INSERT INTO store_redemptions (id, group_id, item_id, item_name, telegram_id, cost_points, redeem_code, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+      .bind(crypto.randomUUID(), groupId, item.id, item.name, user.id, item.cost_points, redeemCode, now),
+  ];
+  if (item.stock > 0) {
+    stmts.push(c.env.DB.prepare("UPDATE store_items SET stock = stock - 1 WHERE id = ?").bind(item.id));
+  }
+  await c.env.DB.batch(stmts);
+  return c.json({ ok: true, redeemCode });
+});
+
+app.post("/api/groups/:id/antispam", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, groupId, user.id);
+  if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
+
+  const body = await c.req.json();
+  await c.env.DB.prepare("UPDATE groups SET anti_spam_enabled = ?, ban_links = ?, banned_keywords = ?, updated_at = ? WHERE group_id = ?")
+    .bind(body.enabled ? 1 : 0, body.banLinks ? 1 : 0, body.keywords || "", Date.now(), groupId).run();
+  return c.json({ ok: true });
+});
+
+app.get("/api/groups/:id/broadcasts", async (c) => {
+  const groupId = Number(c.req.param("id"));
+  const rows = await c.env.DB.prepare("SELECT * FROM group_broadcasts WHERE group_id = ? ORDER BY created_at DESC").bind(groupId).all();
+  return c.json({ ok: true, broadcasts: rows.results || [] });
+});
+
+app.post("/api/groups/:id/broadcasts", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, groupId, user.id);
+  if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
+
+  const body = await c.req.json();
+  const id = crypto.randomUUID();
+  const sent = await tgApi(c.env.TELEGRAM_BOT_TOKEN, "sendMessage", {
+    chat_id: groupId,
+    text: "📢 " + body.content,
+  });
+  const msgId = sent?.result?.message_id || 0;
+
+  await c.env.DB.prepare("INSERT INTO group_broadcasts (id, group_id, content, interval_hours, last_sent_at, last_message_id, enabled, created_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?)")
+    .bind(id, groupId, body.content, Math.max(1, Number(body.intervalHours) || 24), Date.now(), msgId, Date.now()).run();
+  return c.json({ ok: true, id });
+});
+
+app.delete("/api/groups/:id/broadcasts/:bid", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, groupId, user.id);
+  if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
+
+  await c.env.DB.prepare("DELETE FROM group_broadcasts WHERE id = ? AND group_id = ?").bind(c.req.param("bid"), groupId).run();
+  return c.json({ ok: true });
 });
 
 // ==================== 4. Webhook & Cron ====================
