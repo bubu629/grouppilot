@@ -1,0 +1,1 @@
+ALTER TABLE groups ADD COLUMN plan_expires_at INTEGER DEFAULT 0;

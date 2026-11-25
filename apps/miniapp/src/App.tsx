@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AppRoot, Section, Cell, Button, Badge, Banner } from '@telegram-apps/telegram-ui';
+import { AppRoot, Section, Cell, Button, Badge } from '@telegram-apps/telegram-ui';
 
 const API_BASE = 'https://grouppilot-worker.zhangbanzhuan.workers.dev';
 
@@ -10,267 +10,8 @@ declare global {
 }
 
 type Lang = 'zh' | 'en';
-
-const I18N: Record<Lang, Record<string, string>> = {
-  zh: {
-    hello: '你好',
-    subtitle: '活动 · 积分红包 · 幸运抽奖 · 群协作',
-    checking: '检测中...',
-    connected: '已连接云端',
-    abnormal: '异常',
-    connFailed: '连接失败',
-    secEngage: '社群激励与互动',
-    secCollab: '群组协作与商业化',
-    pktTitle: '红包中心',
-    pktSub: '拼手气 / 均分积分红包',
-    pktBadge: '积分版',
-    rflTitle: '幸运抽奖',
-    rflSub: '多等级奖品 · 手动/定时/满人自动开奖',
-    evtTitle: '活动报名',
-    evtSub: '名额上限 · 候补自动递补',
-    polTitle: '群组投票',
-    polSub: '单选 / 多选 / 真匿名投票',
-    admTitle: '群组运营与 Pro 会员',
-    admSub: 'Stars 升级 Pro · 群积分榜 · 入群欢迎语',
-    backHome: '← 返回首页',
-    selectGroup: '选择目标群组（需先拉 Bot 进群设管理员）',
-    noGroup: '暂未检测到已绑定的群组，请先将 Bot 拉进测试群并设为管理员。',
-    needGroup: '请先将 Bot 拉入群组并设为管理员',
-    // Red Packet
-    pktCreateHeader: '发一个群组积分红包',
-    pktPlaceholder: '红包祝福语',
-    pktAmountPh: '总积分',
-    pktUnitPts: '积分',
-    pktCountPh: '份数',
-    pktUnitCnt: '个',
-    pktLucky: '拼手气红包',
-    pktEqual: '普通均分红包',
-    pktSendBtn: '🧧 发送红包到群聊',
-    pktSending: '正在发送红包到群里...',
-    pktSent: '✅ 红包已发送到群里！',
-    pktClaiming: '正在开红包...',
-    pktClaimBtn: '🧧 立即开红包',
-    pktClaimed: '已领取',
-    pktStatus: '状态',
-    pktPool: '总奖池',
-    pktUnitPtsFull: '社区积分',
-    // Raffle
-    rflCreateHeader: '发起群组幸运抽奖（2.0 进阶版）',
-    rflTitlePh: '抽奖标题',
-    rflTriggerLabel: '开奖方式',
-    rflManual: '手动开奖（群主随时开奖）',
-    rflTime: '定时自动开奖（到点自动开奖）',
-    rflPart: '满人自动开奖（达标瞬间开奖）',
-    rflTargetPh: '满多少人自动开奖',
-    rflTargetUnit: '人开奖',
-    rflPrizesLabel: '奖项设置（支持多等级奖品）',
-    rflPrizePh: '奖品名称',
-    rflQuotaUnit: '名',
-    rflAddPrize: '+ 添加一个奖项等级',
-    rflNewPrizeDef: '三等奖：幸运奖',
-    rflSendBtn: '🎰 发布抽奖到群聊',
-    rflSending: '正在发布抽奖到群里...',
-    rflSent: '✅ 抽奖卡片已发送到群里！',
-    rflNeedPrize: '请至少填写 1 个奖品',
-    rflEnterBtn: '🎰 免费点击参与抽奖',
-    rflDrawBtn: '🎲 群主立即开奖',
-    rflEntered: '✅ 参与成功！等待开奖',
-    rflDrawn: '🎉 已开奖！结果已同步到群聊',
-    rflParticipants: '当前参与',
-    rflPersonUnit: '人',
-    rflMode: '开奖方式',
-    rflPrizesPrefix: '奖品：',
-    rflClaimCode: '核销码：',
-    // Event
-    evtCreateHeader: '发布群组活动报名',
-    evtTitlePh: '活动名称',
-    evtLocPh: '活动地点 / 形式',
-    evtMaxPh: '名额上限（0为不限）',
-    evtWaitlist: '满员后开启候补队列（有人取消自动递补）',
-    evtSendBtn: '📅 发布活动到群聊',
-    evtSending: '正在发布活动到群里...',
-    evtSent: '✅ 活动卡片已发送到群里！',
-    evtJoinBtn: '✅ 立即报名',
-    evtCancelBtn: '取消报名',
-    evtJoined: '✅ 报名成功',
-    evtCancelled: '已取消报名，候补将自动递补',
-    evtLocLabel: '地点：',
-    evtLocDef: '群内通知',
-    evtMaxLabel: '名额上限：',
-    evtUnlimited: '不限',
-    evtCurrent: '当前已报：',
-    evtConfirmed: '✅ 已确认',
-    evtWaitlisted: '⏳ 候补中',
-    // Poll
-    polCreateHeader: '发起群组投票',
-    polQPh: '投票问题',
-    polOptPh: '每行输入一个选项',
-    polMulti: '允许多选',
-    polAnon: '匿名投票',
-    polSendBtn: '📊 发布投票到群聊',
-    polSending: '正在发布投票到群里...',
-    polSent: '✅ 投票卡片已发送到群里！',
-    polNeed2: '请至少填写 2 个投票选项（每行一个）',
-    polSingle: '单选',
-    polMultiTag: '多选',
-    polAnonTag: '真匿名投票',
-    polPublicTag: '公开投票',
-    polTapHint: '点击选项后提交投票',
-    polVoteUnit: '票',
-    polVoteBtn: '✅ 提交投票',
-    polNeedSel: '请先选择投票选项',
-    polVoted: '✅ 投票成功！',
-    // Admin & Pro
-    proHeader: '👑 GroupPilot Pro 商业订阅（Telegram Stars）',
-    proPlanLabel: '当前群组套餐',
-    proActiveSub: '当前群组已解锁全部 Pro 高级功能',
-    proFreeSub: '升级 Pro 解锁无限活动、多级抽奖与专属标识',
-    proBuyBtn: '⭐ 100 Stars 升级 Pro（30天）',
-    proTestBtn: '🧪 1 Star 真机支付测试',
-    proCreating: '正在唤起 Telegram Stars 支付...',
-    proPaid: '👑 支付成功！群组已升级为 GroupPilot Pro！',
-    proCancelled: '已取消支付',
-    welcomeHeader: '入群欢迎语设置',
-    welcomeEnable: '开启新成员入群自动欢迎',
-    welcomePh: '支持使用 {name} 代表新成员昵称',
-    saveSettings: '💾 保存群组设置',
-    settingsSaved: '✅ 群组入群欢迎语已保存！',
-    lbHeader: '🏆 群积分排行榜（Top 20）',
-    lbEmpty: '暂无积分记录',
-    lbEmptySub: '群友抢红包或中奖后，积分将自动显示在这里',
-    failed: '失败',
-    tip: '提示',
-  },
-  en: {
-    hello: 'Hi',
-    subtitle: 'Events · Red Packets · Raffles · Group Ops',
-    checking: 'Checking...',
-    connected: 'Cloud Connected',
-    abnormal: 'Error',
-    connFailed: 'Offline',
-    secEngage: 'Community Engagement',
-    secCollab: 'Group Ops & Pro',
-    pktTitle: 'Red Packets',
-    pktSub: 'Lucky / Equal Points Red Packets',
-    pktBadge: 'PTS',
-    rflTitle: 'Lucky Draw',
-    rflSub: 'Multi-tier Prizes · Manual / Timed / Goal Auto-Draw',
-    evtTitle: 'Event RSVP',
-    evtSub: 'Capacity Limit · Auto Waitlist Promotion',
-    polTitle: 'Group Polls',
-    polSub: 'Single / Multiple / True Anonymous Polls',
-    admTitle: 'Group Ops & Pro Plan',
-    admSub: 'Upgrade Pro via Stars · Leaderboard · Welcome Msg',
-    backHome: '← Back to Home',
-    selectGroup: 'Select Target Group (Add Bot as Admin first)',
-    noGroup: 'No group detected. Please add the Bot to your group as an Admin.',
-    needGroup: 'Please add the Bot to a group as Admin first',
-    // Red Packet
-    pktCreateHeader: 'Send a Group Points Red Packet',
-    pktPlaceholder: 'Greeting / Title',
-    pktAmountPh: 'Total Points',
-    pktUnitPts: 'PTS',
-    pktCountPh: 'Count',
-    pktUnitCnt: 'pcs',
-    pktLucky: 'Lucky Draw (Random)',
-    pktEqual: 'Equal Split',
-    pktSendBtn: '🧧 Send Red Packet to Group',
-    pktSending: 'Sending red packet...',
-    pktSent: '✅ Red packet sent to group!',
-    pktClaiming: 'Opening red packet...',
-    pktClaimBtn: '🧧 Open Red Packet',
-    pktClaimed: 'Claimed',
-    pktStatus: 'Status',
-    pktPool: 'Total Pool',
-    pktUnitPtsFull: 'Points',
-    // Raffle
-    rflCreateHeader: 'Create Lucky Draw (v2.0)',
-    rflTitlePh: 'Raffle Title',
-    rflTriggerLabel: 'Draw Trigger',
-    rflManual: 'Manual Draw (Admin draws anytime)',
-    rflTime: 'Scheduled Auto-Draw (By Time)',
-    rflPart: 'Goal Auto-Draw (By Participants)',
-    rflTargetPh: 'Target participants',
-    rflTargetUnit: 'users',
-    rflPrizesLabel: 'Prizes (Multi-tier supported)',
-    rflPrizePh: 'Prize Name',
-    rflQuotaUnit: 'qty',
-    rflAddPrize: '+ Add Prize Tier',
-    rflNewPrizeDef: '3rd Prize: Lucky Reward',
-    rflSendBtn: '🎰 Post Raffle to Group',
-    rflSending: 'Posting raffle...',
-    rflSent: '✅ Raffle card posted to group!',
-    rflNeedPrize: 'Please add at least 1 prize',
-    rflEnterBtn: '🎰 Enter Raffle for Free',
-    rflDrawBtn: '🎲 Draw Winners Now (Admin)',
-    rflEntered: '✅ Entered! Good luck',
-    rflDrawn: '🎉 Winners drawn & posted to group!',
-    rflParticipants: 'Entries',
-    rflPersonUnit: '',
-    rflMode: 'Mode',
-    rflPrizesPrefix: 'Prizes: ',
-    rflClaimCode: 'Claim Code: ',
-    // Event
-    evtCreateHeader: 'Create Group Event RSVP',
-    evtTitlePh: 'Event Title',
-    evtLocPh: 'Location / Venue',
-    evtMaxPh: 'Max Capacity (0 = unlimited)',
-    evtWaitlist: 'Enable auto-waitlist when full',
-    evtSendBtn: '📅 Post Event to Group',
-    evtSending: 'Posting event...',
-    evtSent: '✅ Event card posted to group!',
-    evtJoinBtn: '✅ RSVP Now',
-    evtCancelBtn: 'Cancel RSVP',
-    evtJoined: '✅ RSVP confirmed',
-    evtCancelled: 'Cancelled. Waitlist auto-promoted.',
-    evtLocLabel: 'Location: ',
-    evtLocDef: 'TBA',
-    evtMaxLabel: 'Limit: ',
-    evtUnlimited: 'Unlimited',
-    evtCurrent: 'Registered: ',
-    evtConfirmed: '✅ Confirmed',
-    evtWaitlisted: '⏳ Waitlist',
-    // Poll
-    polCreateHeader: 'Create Group Poll',
-    polQPh: 'Poll Question',
-    polOptPh: 'One option per line',
-    polMulti: 'Multiple Choice',
-    polAnon: 'Anonymous',
-    polSendBtn: '📊 Post Poll to Group',
-    polSending: 'Posting poll...',
-    polSent: '✅ Poll posted to group!',
-    polNeed2: 'Please enter at least 2 options (one per line)',
-    polSingle: 'Single Choice',
-    polMultiTag: 'Multiple Choice',
-    polAnonTag: 'Anonymous',
-    polPublicTag: 'Public',
-    polTapHint: 'Select option(s) and submit',
-    polVoteUnit: 'votes',
-    polVoteBtn: '✅ Submit Vote',
-    polNeedSel: 'Please select an option first',
-    polVoted: '✅ Vote submitted!',
-    // Admin & Pro
-    proHeader: '👑 GroupPilot Pro (Telegram Stars)',
-    proPlanLabel: 'Current Group Plan',
-    proActiveSub: 'All Pro features unlocked for this group',
-    proFreeSub: 'Upgrade to Pro for unlimited events, multi-tier raffles & badge',
-    proBuyBtn: '⭐ Upgrade Pro · 100 Stars (30d)',
-    proTestBtn: '🧪 1 Star Live Payment Test',
-    proCreating: 'Opening Telegram Stars checkout...',
-    proPaid: '👑 Payment successful! Group upgraded to Pro!',
-    proCancelled: 'Payment cancelled',
-    welcomeHeader: 'Welcome Message Settings',
-    welcomeEnable: 'Auto-welcome new members',
-    welcomePh: 'Use {name} for new member name',
-    saveSettings: '💾 Save Settings',
-    settingsSaved: '✅ Group settings saved!',
-    lbHeader: '🏆 Points Leaderboard (Top 20)',
-    lbEmpty: 'No points yet',
-    lbEmptySub: 'Points earned from red packets & raffles appear here',
-    failed: 'Failed',
-    tip: 'Notice',
-  },
-};
+type Tab = 'ENGAGE' | 'STORE' | 'OPS' | 'PRO';
+type SubView = 'NONE' | 'PACKETS' | 'RAFFLES' | 'EVENTS' | 'POLLS';
 
 async function apiFetch(path: string, options: RequestInit = {}) {
   const initData = window.Telegram?.WebApp?.initData || '';
@@ -289,10 +30,10 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '10px 12px',
   borderRadius: 10,
-  border: '1px solid rgba(128,128,128,0.3)',
+  border: '1px solid rgba(128,128,128,0.28)',
   background: 'transparent',
   color: 'inherit',
-  fontSize: 15,
+  fontSize: 14,
   boxSizing: 'border-box',
 };
 
@@ -300,9 +41,9 @@ const unitBoxStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   flex: 1,
-  border: '1px solid rgba(128,128,128,0.3)',
+  border: '1px solid rgba(128,128,128,0.28)',
   borderRadius: 10,
-  padding: '0 12px',
+  padding: '0 10px',
 };
 
 const unitInputStyle: React.CSSProperties = {
@@ -313,7 +54,7 @@ const unitInputStyle: React.CSSProperties = {
   outline: 'none',
   background: 'transparent',
   color: 'inherit',
-  fontSize: 15,
+  fontSize: 14,
 };
 
 export default function App() {
@@ -323,102 +64,94 @@ export default function App() {
     const tgLang = window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code || navigator.language || 'zh';
     return tgLang.toLowerCase().startsWith('zh') ? 'zh' : 'en';
   });
-
-  const t = (key: string) => I18N[lang][key] || key;
-
+  const zh = lang === 'zh';
   const toggleLang = () => {
-    const next: Lang = lang === 'zh' ? 'en' : 'zh';
+    const next: Lang = zh ? 'en' : 'zh';
     setLang(next);
     localStorage.setItem('gp_lang', next);
   };
 
-  const [route, setRoute] = useState<'HOME' | 'EVENTS' | 'PACKETS' | 'RAFFLES' | 'POLLS' | 'ADMIN' | 'STORE' | 'GUARD' | 'PRO_HUB'>('HOME');
+  const [tab, setTab] = useState<Tab>('ENGAGE');
+  const [subView, setSubView] = useState<SubView>('NONE');
   const [targetId, setTargetId] = useState<string | null>(null);
-  const [tgUser, setTgUser] = useState<any>(null);
-  const [apiState, setApiState] = useState<'checking' | 'connected' | 'abnormal' | 'connFailed'>('checking');
   const [groups, setGroups] = useState<any[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [msg, setMsg] = useState<string>('');
 
-  // Red Packet
-  const [pktTitle, setPktTitle] = useState(lang === 'zh' ? '群友专属福利红包' : 'Community Bonus Red Packet');
+  // 红包
+  const [pktTitle, setPktTitle] = useState(zh ? '群友专属福利红包' : 'Community Red Packet');
   const [pktAmount, setPktAmount] = useState('1000');
   const [pktCount, setPktCount] = useState('10');
   const [pktType, setPktType] = useState<'LUCKY' | 'EQUAL'>('LUCKY');
   const [pktDetail, setPktDetail] = useState<any>(null);
 
-  // Raffle 2.0
-  const [rflTitle, setRflTitle] = useState(lang === 'zh' ? '周末幸运大抽奖' : 'Weekend Lucky Draw');
+  // 抽奖
+  const [rflTitle, setRflTitle] = useState(zh ? '周末幸运大抽奖' : 'Weekend Lucky Draw');
   const [rflTrigger, setRflTrigger] = useState<'MANUAL' | 'TIME' | 'PARTICIPANTS'>('MANUAL');
   const [rflDrawAt, setRflDrawAt] = useState(() => {
     const d = new Date(Date.now() + 2 * 3600 * 1000);
     return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   });
   const [rflTargetCount, setRflTargetCount] = useState('20');
-  const [rflPrizes, setRflPrizes] = useState<Array<{ prizeName: string; winnerQuota: string }>>(
-    lang === 'zh'
-      ? [
-          { prizeName: '一等奖：神秘大奖', winnerQuota: '1' },
-          { prizeName: '二等奖：500 社区积分', winnerQuota: '3' },
-        ]
-      : [
-          { prizeName: '1st Prize: Mystery Gift', winnerQuota: '1' },
-          { prizeName: '2nd Prize: 500 Points', winnerQuota: '3' },
-        ]
-  );
+  const [rflPrizes, setRflPrizes] = useState([
+    { prizeName: zh ? '一等奖：神秘大奖' : '1st Prize: Mystery Gift', winnerQuota: '1' },
+    { prizeName: zh ? '二等奖：500 社区积分' : '2nd Prize: 500 PTS', winnerQuota: '3' },
+  ]);
   const [rflDetail, setRflDetail] = useState<any>(null);
 
-  // Event
-  const [evtTitle, setEvtTitle] = useState(lang === 'zh' ? '周末线下聚会 / 线上分享' : 'Weekend Community Meetup');
-  const [evtLoc, setEvtLoc] = useState(lang === 'zh' ? '群内语音 / 待定' : 'Telegram Voice Chat / TBA');
+  // 活动
+  const [evtTitle, setEvtTitle] = useState(zh ? '周末社区交流活动' : 'Weekend Meetup');
+  const [evtLoc, setEvtLoc] = useState(zh ? '群内语音 / 待定' : 'Voice Chat / TBA');
   const [evtMax, setEvtMax] = useState('20');
   const [evtWaitlist, setEvtWaitlist] = useState(true);
   const [evtDetail, setEvtDetail] = useState<any>(null);
 
-  // Poll
-  const [polQuestion, setPolQuestion] = useState(lang === 'zh' ? '本周活动大家想选哪个时间？' : 'Best time for this week’s event?');
-  const [polOptionsText, setPolOptionsText] = useState(
-    lang === 'zh' ? '周五晚上 8 点\n周六下午 3 点\n周日下午 3 点' : 'Friday 8 PM\nSaturday 3 PM\nSunday 3 PM'
-  );
+  // 投票
+  const [polQuestion, setPolQuestion] = useState(zh ? '本周活动大家想选哪个时间？' : 'Best time for our event?');
+  const [polOptionsText, setPolOptionsText] = useState(zh ? '周五晚 8 点\n周六下午 3 点\n周日下午 3 点' : 'Fri 8 PM\nSat 3 PM\nSun 3 PM');
   const [polMultiple, setPolMultiple] = useState(false);
   const [polAnonymous, setPolAnonymous] = useState(true);
   const [polDetail, setPolDetail] = useState<any>(null);
   const [polSelected, setPolSelected] = useState<number[]>([]);
 
-  // Admin & Pro
+  // 签到与商城
+  const [storeData, setStoreData] = useState<any>({ isAdmin: false, balance: 0, items: [], orders: [] });
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemCost, setNewItemCost] = useState('100');
+
+  // 运营（反垃圾 + 定时播报 + 欢迎语 + 排行榜）
   const [adminData, setAdminData] = useState<any>(null);
   const [welcomeEnabled, setWelcomeEnabled] = useState(false);
-  const [welcomeText, setWelcomeText] = useState('欢迎 {name} 加入本群！/ Welcome {name}! 🎉');
+  const [welcomeText, setWelcomeText] = useState('欢迎 {name} 加入本群！🎉');
+  const [antiSpam, setAntiSpam] = useState(false);
+  const [banLinks, setBanLinks] = useState(true);
+  const [bannedKws, setBannedKws] = useState('');
+  const [broadcasts, setBroadcasts] = useState<any[]>([]);
+  const [bcText, setBcText] = useState('');
+  const [bcHours, setBcHours] = useState('24');
+
+  // Pro 专享
+  const [forceChannel, setForceChannel] = useState('');
+  const [customFooter, setCustomFooter] = useState('');
+  const [paidStars, setPaidStars] = useState('50');
+  const [inviteData, setInviteData] = useState<any>({ myLink: null, leaderboard: [] });
+  const [multiBcText, setMultiBcText] = useState('');
+  const [banUid, setBanUid] = useState('');
+  const [codeItemId, setCodeItemId] = useState('');
+  const [codesText, setCodesText] = useState('');
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
     if (tg) {
       tg.ready();
       tg.expand();
-      setTgUser(tg.initDataUnsafe?.user || null);
-
       const urlParam = new URLSearchParams(window.location.search).get('tgWebAppStartParam') || '';
-      const startParam: string = tg.initDataUnsafe?.start_param || urlParam;
-      if (startParam.startsWith('pkt_')) {
-        setTargetId(startParam.slice(4));
-        setRoute('PACKETS');
-      } else if (startParam.startsWith('rfl_')) {
-        setTargetId(startParam.slice(4));
-        setRoute('RAFFLES');
-      } else if (startParam.startsWith('evt_')) {
-        setTargetId(startParam.slice(4));
-        setRoute('EVENTS');
-      } else if (startParam.startsWith('pol_')) {
-        setTargetId(startParam.slice(4));
-        setRoute('POLLS');
-      }
+      const sp: string = tg.initDataUnsafe?.start_param || urlParam;
+      if (sp.startsWith('pkt_')) { setTargetId(sp.slice(4)); setTab('ENGAGE'); setSubView('PACKETS'); }
+      else if (sp.startsWith('rfl_')) { setTargetId(sp.slice(4)); setTab('ENGAGE'); setSubView('RAFFLES'); }
+      else if (sp.startsWith('evt_')) { setTargetId(sp.slice(4)); setTab('ENGAGE'); setSubView('EVENTS'); }
+      else if (sp.startsWith('pol_')) { setTargetId(sp.slice(4)); setTab('ENGAGE'); setSubView('POLLS'); }
     }
-
-    fetch(API_BASE)
-      .then((r) => r.json())
-      .then((d) => setApiState(d.ok ? 'connected' : 'abnormal'))
-      .catch(() => setApiState('connFailed'));
-
     apiFetch('/api/groups').then((d) => {
       if (d.ok && d.groups?.length) {
         setGroups(d.groups);
@@ -427,115 +160,26 @@ export default function App() {
     });
   }, []);
 
-  
-  // 签到与积分商城
-  const [storeData, setStoreData] = useState<any>({ balance: 0, items: [], orders: [] });
-  const [newItemName, setNewItemName] = useState("");
-  const [newItemCost, setNewItemCost] = useState("100");
-  // 反垃圾与定时播报
-  const [antiSpam, setAntiSpam] = useState(false);
-  const [banLinks, setBanLinks] = useState(true);
-  const [bannedKws, setBannedKws] = useState("");
-  const [broadcasts, setBroadcasts] = useState<any[]>([]);
-  const [bcText, setBcText] = useState("");
-  const [bcHours, setBcHours] = useState("24");
-
-  const refreshStore = (gid: string) => {
-    if (!gid) return;
-    apiFetch(`/api/groups/${gid}/store`).then((d) => d.ok && setStoreData(d));
-  };
-  const refreshGuard = (gid: string) => {
+  const refreshAdmin = (gid: string) => {
     if (!gid) return;
     apiFetch(`/api/groups/${gid}/admin`).then((d) => {
       if (d.ok && d.group) {
+        setAdminData(d);
+        setWelcomeEnabled(Boolean(d.group.welcome_enabled));
+        setWelcomeText(d.group.welcome_text || '欢迎 {name} 加入本群！🎉');
         setAntiSpam(Boolean(d.group.anti_spam_enabled));
         setBanLinks(Boolean(d.group.ban_links));
-        setBannedKws(d.group.banned_keywords || "");
+        setBannedKws(d.group.banned_keywords || '');
+        setForceChannel(d.group.force_channel_id || '');
+        setCustomFooter(d.group.custom_footer || '');
+        setPaidStars(String(d.group.paid_join_stars || 0));
       }
     });
     apiFetch(`/api/groups/${gid}/broadcasts`).then((d) => d.ok && setBroadcasts(d.broadcasts || []));
   };
 
-  const handleCheckin = async () => {
-    if (!selectedGroupId) return setMsg(t("needGroup"));
-    const res = await apiFetch(`/api/groups/${selectedGroupId}/checkin`, { method: "POST" });
-    if (res.ok) {
-      setMsg(lang === "zh" ? `🎉 签到成功！连续 ${res.streak} 天，获得 +${res.points} 积分` : `🎉 Checked in! Streak: ${res.streak}d (+${res.points} PTS)`);
-      refreshStore(selectedGroupId);
-    } else setMsg(`${t("tip")}: ${res.error}`);
-  };
-
-  const handleAddItem = async () => {
-    if (!selectedGroupId || !newItemName.trim()) return;
-    const res = await apiFetch(`/api/groups/${selectedGroupId}/store/items`, {
-      method: "POST",
-      body: JSON.stringify({ name: newItemName.trim(), costPoints: Number(newItemCost) || 100 }),
-    });
-    if (res.ok) {
-      setNewItemName("");
-      setMsg(lang === "zh" ? "✅ 商品已上架" : "✅ Item added");
-      refreshStore(selectedGroupId);
-    } else setMsg(`❌ ${res.error}`);
-  };
-
-  const handleRedeem = async (itemId: string) => {
-    const res = await apiFetch(`/api/groups/${selectedGroupId}/store/redeem`, {
-      method: "POST",
-      body: JSON.stringify({ itemId }),
-    });
-    if (res.ok) {
-      setMsg(lang === "zh" ? `🎉 兑换成功！核销码：${res.redeemCode}` : `🎉 Redeemed! Code: ${res.redeemCode}`);
-      refreshStore(selectedGroupId);
-    } else setMsg(`${t("tip")}: ${res.error}`);
-  };
-
-  const handleSaveAntiSpam = async () => {
-    const res = await apiFetch(`/api/groups/${selectedGroupId}/antispam`, {
-      method: "POST",
-      body: JSON.stringify({ enabled: antiSpam, banLinks, keywords: bannedKws }),
-    });
-    setMsg(res.ok ? (lang === "zh" ? "✅ 反垃圾规则已保存" : "✅ Anti-spam saved") : `❌ ${res.error}`);
-  };
-
-  const handleAddBroadcast = async () => {
-    if (!bcText.trim()) return;
-    const res = await apiFetch(`/api/groups/${selectedGroupId}/broadcasts`, {
-      method: "POST",
-      body: JSON.stringify({ content: bcText.trim(), intervalHours: Number(bcHours) || 24 }),
-    });
-    if (res.ok) {
-      setBcText("");
-      setMsg(lang === "zh" ? "✅ 已立即发送并开启定时周期播报" : "✅ Broadcast posted & scheduled");
-      refreshGuard(selectedGroupId);
-    } else setMsg(`❌ ${res.error}`);
-  };
-
-  const handleDeleteBroadcast = async (bid: string) => {
-    await apiFetch(`/api/groups/${selectedGroupId}/broadcasts/${bid}`, { method: "DELETE" });
-    refreshGuard(selectedGroupId);
-  };
-
-  
-  // Pro 专享 8 大功能状态
-  const [forceChannel, setForceChannel] = useState("");
-  const [customFooter, setCustomFooter] = useState("");
-  const [paidStars, setPaidStars] = useState("50");
-  const [inviteData, setInviteData] = useState<any>({ myLink: null, leaderboard: [] });
-  const [multiBcText, setMultiBcText] = useState("");
-  const [banUid, setBanUid] = useState("");
-  const [codeItemId, setCodeItemId] = useState("");
-  const [codesText, setCodesText] = useState("");
-
-  const refreshProHub = (gid: string) => {
+  const refreshStore = (gid: string) => {
     if (!gid) return;
-    apiFetch(`/api/groups/${gid}/admin`).then((d) => {
-      if (d.ok && d.group) {
-        setForceChannel(d.group.force_channel_id || "");
-        setCustomFooter(d.group.custom_footer || "");
-        setPaidStars(String(d.group.paid_join_stars || 0));
-      }
-    });
-    apiFetch(`/api/groups/${gid}/invites`).then((d) => d.ok && setInviteData(d));
     apiFetch(`/api/groups/${gid}/store`).then((d) => {
       if (d.ok) {
         setStoreData(d);
@@ -544,922 +188,410 @@ export default function App() {
     });
   };
 
-  const handleSaveProConfig = async () => {
-    const res = await apiFetch(`/api/groups/${selectedGroupId}/pro-config`, {
-      method: "POST",
-      body: JSON.stringify({ forceChannelId: forceChannel.trim(), customFooter: customFooter.trim(), paidJoinStars: Number(paidStars) || 0, paidJoinDays: 30 }),
-    });
-    setMsg(res.ok ? "✅ Pro 专属配置已保存！" : `❌ ${res.error}`);
-  };
-
-  const handleGenInvite = async () => {
-    const res = await apiFetch(`/api/groups/${selectedGroupId}/invites`, { method: "POST" });
-    if (res.ok) {
-      setMsg(`✅ 专属邀请链接已生成：${res.inviteUrl}`);
-      refreshProHub(selectedGroupId);
-    } else setMsg(`❌ ${res.error}`);
-  };
-
-  const handlePaidJoinTest = async () => {
-    const res = await apiFetch(`/api/groups/${selectedGroupId}/paid-join-invoice`, { method: "POST" });
-    if (!res.ok) return setMsg(`❌ ${res.error}`);
-    window.Telegram?.WebApp?.openInvoice?.(res.invoiceUrl, (st: string) => setMsg(`支付状态：${st}`));
-  };
-
-  const handleMultiBroadcast = async () => {
-    if (!multiBcText.trim()) return;
-    const res = await apiFetch("/api/pro/multi-broadcast", { method: "POST", body: JSON.stringify({ content: multiBcText.trim() }) });
-    if (res.ok) { setMultiBcText(""); setMsg(`✅ 已同步群发至 ${res.sentCount} 个 Pro 群！`); }
-    else setMsg(`❌ ${res.error}`);
-  };
-
-  const handleGlobalBan = async () => {
-    if (!banUid.trim()) return;
-    const res = await apiFetch("/api/pro/global-ban", { method: "POST", body: JSON.stringify({ targetTelegramId: Number(banUid) }) });
-    if (res.ok) { setBanUid(""); setMsg(`🛡️ 已在 ${res.bannedCount} 个 Pro 群同步拉黑该用户！`); }
-    else setMsg(`❌ ${res.error}`);
-  };
-
-  const handleImportCodes = async () => {
-    if (!codeItemId || !codesText.trim()) return;
-    const res = await apiFetch(`/api/groups/${selectedGroupId}/store/items/${codeItemId}/codes`, {
-      method: "POST",
-      body: JSON.stringify({ codesText }),
-    });
-    if (res.ok) { setCodesText(""); setMsg(`✅ 成功导入 ${res.imported} 条卡密，兑换时将自动私发！`); }
-    else setMsg(`❌ ${res.error}`);
-  };
-
-  const handleExportCsv = async () => {
-    const res = await apiFetch(`/api/groups/${selectedGroupId}/export/leaderboard`);
-    if (!res.ok) return setMsg(`❌ ${res.error}`);
-    const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `grouppilot_leaderboard_${selectedGroupId}.csv`;
-    a.click();
-    setMsg("✅ 积分榜 CSV 已导出！");
-  };
-
-  const refreshAdmin = (gid: string) => {
-    if (!gid) return;
-    apiFetch(`/api/groups/${gid}/admin`).then((d) => {
-      if (d.ok) {
-        setAdminData(d);
-        setWelcomeEnabled(Boolean(d.group?.welcome_enabled));
-        setWelcomeText(d.group?.welcome_text || '欢迎 {name} 加入本群！/ Welcome {name}! 🎉');
-      }
-    });
-  };
-
   useEffect(() => {
     setMsg('');
-    if (route === 'PACKETS' && targetId) apiFetch(`/api/red-packets/${targetId}`).then((d) => d.ok && setPktDetail(d));
-    if (route === 'RAFFLES' && targetId) apiFetch(`/api/raffles/${targetId}`).then((d) => d.ok && setRflDetail(d));
-    if (route === 'EVENTS' && targetId) apiFetch(`/api/events/${targetId}`).then((d) => d.ok && setEvtDetail(d));
-    if (route === 'POLLS' && targetId) apiFetch(`/api/polls/${targetId}`).then((d) => d.ok && setPolDetail(d));
-    if (route === 'ADMIN' && selectedGroupId) refreshAdmin(selectedGroupId);
-    if (route === 'STORE' && selectedGroupId) refreshStore(selectedGroupId);
-    if (route === 'GUARD' && selectedGroupId) refreshGuard(selectedGroupId);
-    if (route === 'PRO_HUB' && selectedGroupId) refreshProHub(selectedGroupId);
-  }, [route, targetId, selectedGroupId]);
-
-  const handleCreatePacket = async () => {
-    if (!selectedGroupId) return setMsg(t('needGroup'));
-    setMsg(t('pktSending'));
-    const res = await apiFetch('/api/red-packets', {
-      method: 'POST',
-      body: JSON.stringify({
-        groupId: Number(selectedGroupId),
-        title: pktTitle,
-        totalAmount: Number(pktAmount),
-        totalCount: Number(pktCount),
-        packetType: pktType,
-      }),
-    });
-    if (res.ok) {
-      setMsg(t('pktSent'));
-      setTargetId(res.id);
-    } else setMsg(`❌ ${t('failed')}: ${res.error}`);
-  };
-
-  const handleClaimPacket = async () => {
-    if (!pktDetail?.packet?.id) return;
-    setMsg(t('pktClaiming'));
-    const res = await apiFetch(`/api/red-packets/${pktDetail.packet.id}/claim`, { method: 'POST' });
-    if (res.ok) {
-      setMsg(lang === 'zh' ? `🎉 恭喜你抢到了 ${res.amount} 社区积分！` : `🎉 You claimed ${res.amount} Points!`);
-      const updated = await apiFetch(`/api/red-packets/${pktDetail.packet.id}`);
-      if (updated.ok) setPktDetail(updated);
-    } else setMsg(`${t('tip')}: ${res.error}`);
-  };
-
-  const handleCreateRaffle = async () => {
-    if (!selectedGroupId) return setMsg(t('needGroup'));
-    const validPrizes = rflPrizes
-      .filter((p) => p.prizeName.trim())
-      .map((p) => ({ prizeName: p.prizeName.trim(), prizeType: 'CUSTOM', winnerQuota: Math.max(1, Number(p.winnerQuota) || 1) }));
-    if (!validPrizes.length) return setMsg(t('rflNeedPrize'));
-
-    setMsg(t('rflSending'));
-    const res = await apiFetch('/api/raffles', {
-      method: 'POST',
-      body: JSON.stringify({
-        groupId: Number(selectedGroupId),
-        title: rflTitle,
-        triggerType: rflTrigger,
-        drawAt: rflTrigger === 'TIME' ? new Date(rflDrawAt).getTime() : null,
-        targetParticipants: rflTrigger === 'PARTICIPANTS' ? Number(rflTargetCount) || 10 : null,
-        prizes: validPrizes,
-      }),
-    });
-    if (res.ok) {
-      setMsg(t('rflSent'));
-      setTargetId(res.id);
-    } else setMsg(`❌ ${t('failed')}: ${res.error}`);
-  };
-
-  const handleEnterRaffle = async () => {
-    if (!rflDetail?.raffle?.id) return;
-    const res = await apiFetch(`/api/raffles/${rflDetail.raffle.id}/enter`, { method: 'POST' });
-    setMsg(res.ok ? t('rflEntered') : `${t('tip')}: ${res.error}`);
-    const updated = await apiFetch(`/api/raffles/${rflDetail.raffle.id}`);
-    if (updated.ok) setRflDetail(updated);
-  };
-
-  const handleDrawRaffle = async () => {
-    if (!rflDetail?.raffle?.id) return;
-    const res = await apiFetch(`/api/raffles/${rflDetail.raffle.id}/draw`, { method: 'POST' });
-    setMsg(res.ok ? t('rflDrawn') : `${t('tip')}: ${res.error}`);
-    const updated = await apiFetch(`/api/raffles/${rflDetail.raffle.id}`);
-    if (updated.ok) setRflDetail(updated);
-  };
-
-  const handleCreateEvent = async () => {
-    if (!selectedGroupId) return setMsg(t('needGroup'));
-    setMsg(t('evtSending'));
-    const now = Date.now();
-    const res = await apiFetch('/api/events', {
-      method: 'POST',
-      body: JSON.stringify({
-        groupId: Number(selectedGroupId),
-        title: evtTitle,
-        location: evtLoc,
-        eventTime: now + 48 * 3600 * 1000,
-        deadlineTime: now + 24 * 3600 * 1000,
-        maxParticipants: Number(evtMax) || 0,
-        allowWaitlist: evtWaitlist,
-      }),
-    });
-    if (res.ok) {
-      setMsg(t('evtSent'));
-      setTargetId(res.id);
-    } else setMsg(`❌ ${t('failed')}: ${res.error}`);
-  };
-
-  const handleEventAction = async (action: 'join' | 'cancel') => {
-    if (!evtDetail?.event?.id) return;
-    const res = await apiFetch(`/api/events/${evtDetail.event.id}/${action}`, { method: 'POST' });
-    setMsg(res.ok ? (action === 'join' ? `${t('evtJoined')} (${res.status})` : t('evtCancelled')) : `${t('tip')}: ${res.error}`);
-    const updated = await apiFetch(`/api/events/${evtDetail.event.id}`);
-    if (updated.ok) setEvtDetail(updated);
-  };
-
-  const handleCreatePoll = async () => {
-    if (!selectedGroupId) return setMsg(t('needGroup'));
-    const options = polOptionsText.split('\n').map((s) => s.trim()).filter(Boolean);
-    if (options.length < 2) return setMsg(t('polNeed2'));
-    setMsg(t('polSending'));
-    const res = await apiFetch('/api/polls', {
-      method: 'POST',
-      body: JSON.stringify({
-        groupId: Number(selectedGroupId),
-        question: polQuestion,
-        options,
-        isMultiple: polMultiple,
-        isAnonymous: polAnonymous,
-      }),
-    });
-    if (res.ok) {
-      setMsg(t('polSent'));
-      setPolSelected([]);
-      setTargetId(res.id);
-    } else setMsg(`❌ ${t('failed')}: ${res.error}`);
-  };
-
-  const handleVotePoll = async () => {
-    if (!polDetail?.poll?.id || !polSelected.length) return setMsg(t('polNeedSel'));
-    const res = await apiFetch(`/api/polls/${polDetail.poll.id}/vote`, {
-      method: 'POST',
-      body: JSON.stringify({ optionIndices: polSelected }),
-    });
-    if (res.ok) {
-      setMsg(t('polVoted'));
-      const updated = await apiFetch(`/api/polls/${polDetail.poll.id}`);
-      if (updated.ok) setPolDetail(updated);
-    } else setMsg(`${t('tip')}: ${res.error}`);
-  };
-
-  const handleSaveSettings = async () => {
-    if (!selectedGroupId) return;
-    const res = await apiFetch(`/api/groups/${selectedGroupId}/settings`, {
-      method: 'POST',
-      body: JSON.stringify({ welcomeEnabled, welcomeText }),
-    });
-    setMsg(res.ok ? t('settingsSaved') : `❌ ${t('failed')}: ${res.error}`);
-  };
-
-  const handleUpgradePro = async (mode: 'NORMAL' | 'TEST') => {
-    if (!selectedGroupId) return setMsg(t('needGroup'));
-    setMsg(t('proCreating'));
-    const res = await apiFetch('/api/payments/pro-invoice', {
-      method: 'POST',
-      body: JSON.stringify({ groupId: Number(selectedGroupId), mode }),
-    });
-    if (!res.ok || !res.invoiceUrl) return setMsg(`❌ ${t('failed')}: ${res.error}`);
-
-    const tg = window.Telegram?.WebApp;
-    if (tg?.openInvoice) {
-      tg.openInvoice(res.invoiceUrl, (status: string) => {
-        if (status === 'paid') {
-          setMsg(t('proPaid'));
-          setTimeout(() => refreshAdmin(selectedGroupId), 1500);
-        } else if (status === 'cancelled') {
-          setMsg(t('proCancelled'));
-        } else {
-          setMsg(`${t('tip')}: ${status}`);
-        }
-      });
-    } else {
-      window.open(res.invoiceUrl, '_blank');
+    if (subView === 'PACKETS' && targetId) apiFetch(`/api/red-packets/${targetId}`).then((d) => d.ok && setPktDetail(d));
+    if (subView === 'RAFFLES' && targetId) apiFetch(`/api/raffles/${targetId}`).then((d) => d.ok && setRflDetail(d));
+    if (subView === 'EVENTS' && targetId) apiFetch(`/api/events/${targetId}`).then((d) => d.ok && setEvtDetail(d));
+    if (subView === 'POLLS' && targetId) apiFetch(`/api/polls/${targetId}`).then((d) => d.ok && setPolDetail(d));
+    if (selectedGroupId) {
+      if (tab === 'STORE') refreshStore(selectedGroupId);
+      if (tab === 'OPS') refreshAdmin(selectedGroupId);
+      if (tab === 'PRO') {
+        refreshAdmin(selectedGroupId);
+        refreshStore(selectedGroupId);
+        apiFetch(`/api/groups/${selectedGroupId}/invites`).then((d) => d.ok && setInviteData(d));
+      }
     }
-  };
+  }, [tab, subView, targetId, selectedGroupId]);
 
-  
   const currentGroup = groups.find((g) => String(g.group_id) === selectedGroupId);
-  const isPro = currentGroup?.plan === "PRO" || adminData?.group?.plan === "PRO";
+  const isPro = currentGroup?.plan === 'PRO' || adminData?.group?.plan === 'PRO';
 
-  const AdSlot = ({ pos }: { pos: "TOP" | "BOTTOM" }) => {
+  const AdSlot = ({ pos }: { pos: 'TOP' | 'BOTTOM' }) => {
     if (isPro) return null;
-    const isTop = pos === "TOP";
-    const title = isTop
-      ? (lang === "zh" ? "🔥 顶部赞助广告位招租" : "🔥 Top Sponsor Slot Available")
-      : (lang === "zh" ? "📢 底部品牌推广位 · 触达精准群友" : "📢 Bottom Ad Slot · Reach Active Members");
-    const sub = isTop
-      ? (lang === "zh" ? "点击联系商务投放 / 升级 Pro 免广告" : "Tap to advertise or upgrade to Pro")
-      : (lang === "zh" ? "支持图文跳转频道、Bot 或官网" : "Direct link to your Channel, Bot or Website");
-    const targetUrl = "https://t.me/grouppilot6299bot";
-
+    const isTop = pos === 'TOP';
     return (
-      <div
-        style={{
-          padding: "10px 12px",
-          borderRadius: 12,
-          border: "1px dashed rgba(128,128,128,0.4)",
-          background: "rgba(128,128,128,0.06)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-        }}
-      >
-        <div
-          onClick={() => window.open(targetUrl, "_blank")}
-          style={{ flex: 1, cursor: "pointer", minWidth: 0 }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 10, padding: "1px 5px", borderRadius: 4, background: "rgba(128,128,128,0.2)", opacity: 0.8 }}>
-              {lang === "zh" ? "广告" : "AD"}
-            </span>
-            <span style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {title}
+      <div style={{ padding: '8px 12px', borderRadius: 12, border: '1px dashed rgba(128,128,128,0.35)', background: 'rgba(128,128,128,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div onClick={() => window.open('https://t.me/grouppilot6299bot', '_blank')} style={{ flex: 1, cursor: 'pointer', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(128,128,128,0.2)' }}>{zh ? '广告' : 'AD'}</span>
+            <span style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {isTop ? (zh ? '🔥 顶部赞助位招租 · 触达精准群友' : '🔥 Top Sponsor Slot Available') : (zh ? '📢 底部推广位 · 支持跳转频道/官网' : '📢 Bottom Ad Slot · Reach Active Groups')}
             </span>
           </div>
-          <div style={{ fontSize: 12, opacity: 0.65, marginTop: 2 }}>{sub}</div>
         </div>
-        <button
-          onClick={() => { setTargetId(null); setRoute("ADMIN"); }}
-          style={{
-            padding: "4px 8px",
-            borderRadius: 8,
-            border: "none",
-            background: "rgba(36,129,204,0.15)",
-            color: "#2481cc",
-            fontSize: 11,
-            fontWeight: 600,
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {lang === "zh" ? "去广告" : "No Ads"}
+        <button onClick={() => { setSubView('NONE'); setTab('PRO'); }} style={{ padding: '4px 8px', borderRadius: 8, border: 'none', background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+          {zh ? '去广告' : 'No Ads'}
         </button>
       </div>
     );
   };
 
-  const GroupSelector = () => (
-    <div style={{ padding: '8px 16px' }}>
-      <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 6 }}>{t('selectGroup')}</div>
-      {groups.length > 0 ? (
-        <select style={inputStyle} value={selectedGroupId} onChange={(e) => setSelectedGroupId(e.target.value)}>
-          {groups.map((g) => (
-            <option key={g.group_id} value={g.group_id}>{g.title}</option>
-          ))}
-        </select>
-      ) : (
-        <div style={{ fontSize: 13, color: '#e53935' }}>{t('noGroup')}</div>
-      )}
+  // --- 核心动作 ---
+  const handleCreatePacket = async () => {
+    if (!selectedGroupId) return setMsg(zh ? '请先将 Bot 拉进群并设为管理员' : 'Add Bot as Admin first');
+    const res = await apiFetch('/api/red-packets', { method: 'POST', body: JSON.stringify({ groupId: Number(selectedGroupId), title: pktTitle, totalAmount: Number(pktAmount), totalCount: Number(pktCount), packetType: pktType }) });
+    if (res.ok) { setMsg(zh ? '✅ 红包已发送到群聊！' : '✅ Red packet sent!'); setTargetId(res.id); } else setMsg(`❌ ${res.error}`);
+  };
+  const handleClaimPacket = async () => {
+    const res = await apiFetch(`/api/red-packets/${pktDetail.packet.id}/claim`, { method: 'POST' });
+    setMsg(res.ok ? (zh ? `🎉 抢到了 ${res.amount} 积分！` : `🎉 Claimed ${res.amount} PTS!`) : `提示：${res.error}`);
+    apiFetch(`/api/red-packets/${pktDetail.packet.id}`).then((d) => d.ok && setPktDetail(d));
+  };
+  const handleCreateRaffle = async () => {
+    if (!selectedGroupId) return setMsg(zh ? '请先选择群组' : 'Select a group');
+    const prizes = rflPrizes.filter((p) => p.prizeName.trim()).map((p) => ({ prizeName: p.prizeName.trim(), prizeType: 'CUSTOM', winnerQuota: Math.max(1, Number(p.winnerQuota) || 1) }));
+    const res = await apiFetch('/api/raffles', { method: 'POST', body: JSON.stringify({ groupId: Number(selectedGroupId), title: rflTitle, triggerType: rflTrigger, drawAt: rflTrigger === 'TIME' ? new Date(rflDrawAt).getTime() : null, targetParticipants: rflTrigger === 'PARTICIPANTS' ? Number(rflTargetCount) || 10 : null, prizes }) });
+    if (res.ok) { setMsg(zh ? '✅ 抽奖已发送到群聊！' : '✅ Raffle posted!'); setTargetId(res.id); } else setMsg(`❌ ${res.error}`);
+  };
+  const handleCreateEvent = async () => {
+    const now = Date.now();
+    const res = await apiFetch('/api/events', { method: 'POST', body: JSON.stringify({ groupId: Number(selectedGroupId), title: evtTitle, location: evtLoc, eventTime: now + 48 * 3600 * 1000, deadlineTime: now + 24 * 3600 * 1000, maxParticipants: Number(evtMax) || 0, allowWaitlist: evtWaitlist }) });
+    if (res.ok) { setMsg(zh ? '✅ 活动已发送到群聊！' : '✅ Event posted!'); setTargetId(res.id); } else setMsg(`❌ ${res.error}`);
+  };
+  const handleCreatePoll = async () => {
+    const options = polOptionsText.split('\n').map((s) => s.trim()).filter(Boolean);
+    const res = await apiFetch('/api/polls', { method: 'POST', body: JSON.stringify({ groupId: Number(selectedGroupId), question: polQuestion, options, isMultiple: polMultiple, isAnonymous: polAnonymous }) });
+    if (res.ok) { setMsg(zh ? '✅ 投票已发送到群聊！' : '✅ Poll posted!'); setPolSelected([]); setTargetId(res.id); } else setMsg(`❌ ${res.error}`);
+  };
+  const handleCheckin = async () => {
+    const res = await apiFetch(`/api/groups/${selectedGroupId}/checkin`, { method: 'POST' });
+    setMsg(res.ok ? (zh ? `🎉 签到成功！连续 ${res.streak} 天 (+${res.points} 积分)` : `🎉 Streak ${res.streak}d (+${res.points} PTS)`) : `提示：${res.error}`);
+    refreshStore(selectedGroupId);
+  };
+  const handleUpgradePro = async (mode: 'NORMAL' | 'TEST') => {
+    const res = await apiFetch('/api/payments/pro-invoice', { method: 'POST', body: JSON.stringify({ groupId: Number(selectedGroupId), mode }) });
+    if (!res.ok) return setMsg(`❌ ${res.error}`);
+    window.Telegram?.WebApp?.openInvoice?.(res.invoiceUrl, (st: string) => {
+      if (st === 'paid') { setMsg(zh ? '👑 支付成功！已升级 Pro！' : '👑 Upgraded to Pro!'); setTimeout(() => refreshAdmin(selectedGroupId), 1500); }
+    });
+  };
+  const handleExportCsv = async () => {
+    const res = await apiFetch(`/api/groups/${selectedGroupId}/export/leaderboard`);
+    setMsg(res.ok ? (zh ? '✅ CSV 表格已由 Bot 私聊发送给你，请返回聊天查看！' : '✅ CSV sent to your Telegram DM!') : `❌ ${res.error}`);
+  };
+
+  const GridCard = ({ icon, title, desc, badge, onClick }: any) => (
+    <div onClick={onClick} style={{ padding: 14, borderRadius: 14, background: 'rgba(128,128,128,0.08)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 6, position: 'relative' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 28 }}>{icon}</span>
+        {badge && <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 99, background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontWeight: 600 }}>{badge}</span>}
+      </div>
+      <div style={{ fontSize: 15, fontWeight: 600 }}>{title}</div>
+      <div style={{ fontSize: 12, opacity: 0.65, lineHeight: 1.3 }}>{desc}</div>
     </div>
   );
 
   return (
     <AppRoot>
-      <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button
-            onClick={toggleLang}
-            style={{
-              padding: '4px 10px',
-              borderRadius: 999,
-              border: '1px solid rgba(128,128,128,0.35)',
-              background: 'transparent',
-              color: 'inherit',
-              fontSize: 12,
-              cursor: 'pointer',
-            }}
-          >
-            🌐 {lang === 'zh' ? 'English' : '中文'}
-          </button>
-        </div>
+      {/* 顶部紧凑全局栏 */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 20, backdropFilter: 'blur(12px)', background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.88)', padding: '10px 12px', borderBottom: '1px solid rgba(128,128,128,0.15)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <select
+          style={{ flex: 1, padding: '6px 10px', borderRadius: 10, border: '1px solid rgba(128,128,128,0.3)', background: 'transparent', color: 'inherit', fontSize: 13, fontWeight: 600 }}
+          value={selectedGroupId}
+          onChange={(e) => setSelectedGroupId(e.target.value)}
+        >
+          {groups.length ? groups.map((g) => <option key={g.group_id} value={g.group_id}>{g.plan === 'PRO' ? '👑 ' : ''}{g.title}</option>) : <option value="">{zh ? '请先拉 Bot 进群设管理员' : 'Add Bot as Admin'}</option>}
+        </select>
+        <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, background: isPro ? 'rgba(255,193,7,0.2)' : 'rgba(128,128,128,0.15)', fontWeight: 700 }}>
+          {isPro ? 'PRO' : 'FREE'}
+        </span>
+        <button onClick={toggleLang} style={{ padding: '4px 8px', borderRadius: 8, border: '1px solid rgba(128,128,128,0.3)', background: 'transparent', color: 'inherit', fontSize: 12, cursor: 'pointer' }}>
+          {zh ? 'EN' : '中'}
+        </button>
+      </div>
 
+      {/* 主内容区（底部留白给 Tab 栏） */}
+      <div style={{ padding: '10px 12px 84px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <AdSlot pos="TOP" />
 
-        <Banner
-          header={`GroupPilot${tgUser ? ` · ${t('hello')}, ${tgUser.first_name}` : ''}`}
-          subheader={`${t('subtitle')} (${t(apiState)})`}
-        />
+        {msg && <div style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(36,129,204,0.12)', fontSize: 13 }}>{msg}</div>}
 
-        {msg && (
-          <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(36,129,204,0.12)', fontSize: 14 }}>
-            {msg}
+        {/* ==================== TAB 1: 互动中心（2列宫格） ==================== */}
+        {tab === 'ENGAGE' && subView === 'NONE' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <GridCard icon="🧧" title={zh ? '积分红包' : 'Red Packets'} desc={zh ? '拼手气/均分红包，自动发战报' : 'Lucky & equal points packets'} badge={zh ? '热门' : 'HOT'} onClick={() => { setTargetId(null); setSubView('PACKETS'); }} />
+            <GridCard icon="🎰" title={zh ? '幸运抽奖' : 'Lucky Draw'} desc={zh ? '多级奖品 · 定时/满人自动开奖' : 'Multi-tier & auto-draw'} badge="2.0" onClick={() => { setTargetId(null); setSubView('RAFFLES'); }} />
+            <GridCard icon="📅" title={zh ? '活动报名' : 'Event RSVP'} desc={zh ? '名额上限 · 候补自动递补' : 'Capacity & auto waitlist'} onClick={() => { setTargetId(null); setSubView('EVENTS'); }} />
+            <GridCard icon="📊" title={zh ? '群组投票' : 'Group Polls'} desc={zh ? '单选/多选/真匿名群投票' : 'Single, multi & anonymous'} onClick={() => { setTargetId(null); setSubView('POLLS'); }} />
           </div>
         )}
 
-        {route === 'HOME' && (
-          <>
-            <Section header={t('secEngage')}>
-              <Cell
-                before={<span style={{ fontSize: 24 }}>🧧</span>}
-                after={<Badge type="number">{t('pktBadge')}</Badge>}
-                subtitle={t('pktSub')}
-                onClick={() => { setTargetId(null); setRoute('PACKETS'); }}
-              >
-                {t('pktTitle')}
-              </Cell>
-              
-              <Cell
-                before={<span style={{ fontSize: 24 }}>🎁</span>}
-                after={<Badge type="number">NEW</Badge>}
-                subtitle={lang === "zh" ? "每日签到领积分 · 兑换群主福利" : "Daily Check-in · Redeem Rewards"}
-                onClick={() => { setTargetId(null); setRoute("STORE"); }}
-              >
-                {lang === "zh" ? "每日签到与积分商城" : "Check-in & Points Store"}
-              </Cell>
-
-              <Cell
-                before={<span style={{ fontSize: 24 }}>🎰</span>}
-                after={<Badge type="number">2.0</Badge>}
-                subtitle={t('rflSub')}
-                onClick={() => { setTargetId(null); setRoute('RAFFLES'); }}
-              >
-                {t('rflTitle')}
-              </Cell>
-            </Section>
-
-            <Section header={t('secCollab')}>
-              <Cell before={<span style={{ fontSize: 24 }}>📅</span>} subtitle={t('evtSub')} onClick={() => { setTargetId(null); setRoute('EVENTS'); }}>
-                {t('evtTitle')}
-              </Cell>
-              <Cell before={<span style={{ fontSize: 24 }}>📊</span>} subtitle={t('polSub')} onClick={() => { setTargetId(null); setRoute('POLLS'); }}>
-                {t('polTitle')}
-              </Cell>
-              
-              <Cell
-                before={<span style={{ fontSize: 24 }}>🛡️</span>}
-                subtitle={lang === "zh" ? "防外链炸群 · 定时周期播报" : "Anti-Spam Filter · Auto Broadcast"}
-                onClick={() => { setTargetId(null); setRoute("GUARD"); }}
-              >
-                {lang === "zh" ? "反垃圾与定时播报" : "Anti-Spam & Broadcasts"}
-              </Cell>
-
-              
-              <Cell
-                before={<span style={{ fontSize: 24 }}>💎</span>}
-                after={<Badge type="number">PRO</Badge>}
-                subtitle={lang === "zh" ? "邀请裂变 · 付费进群 · 强关频道 · 多群联动 · 自动发卡" : "Referrals · Paid Join · Force Sub · Multi-Group · Auto-Keys"}
-                onClick={() => { setTargetId(null); setRoute("PRO_HUB"); }}
-              >
-                {lang === "zh" ? "Pro 专享功能中心（8项）" : "Pro Feature Hub (8 Tools)"}
-              </Cell>
-
-              <Cell
-                before={<span style={{ fontSize: 24 }}>👑</span>}
-                after={<Badge type="dot" />}
-                subtitle={t('admSub')}
-                onClick={() => { setTargetId(null); setRoute('ADMIN'); }}
-              >
-                {t('admTitle')}
-              </Cell>
-            </Section>
-          </>
-        )}
-
-        {route !== 'HOME' && (
-          <Button size="s" mode="bezeled" onClick={() => { setTargetId(null); setPktDetail(null); setRflDetail(null); setEvtDetail(null); setPolDetail(null); setRoute('HOME'); }}>
-            {t('backHome')}
+        {tab === 'ENGAGE' && subView !== 'NONE' && (
+          <Button size="s" mode="bezeled" onClick={() => { setTargetId(null); setSubView('NONE'); }}>
+            {zh ? '← 返回互动中心' : '← Back'}
           </Button>
         )}
 
-        {/* ==================== Red Packets ==================== */}
-        {route === 'PACKETS' && !targetId && (
-          <Section header={t('pktCreateHeader')}>
-            <GroupSelector />
+        {/* 红包子页 */}
+        {tab === 'ENGAGE' && subView === 'PACKETS' && !targetId && (
+          <Section header={zh ? '🧧 发群组积分红包' : '🧧 Send Red Packet'}>
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <input style={inputStyle} value={pktTitle} onChange={(e) => setPktTitle(e.target.value)} placeholder={t('pktPlaceholder')} />
+              <input style={inputStyle} value={pktTitle} onChange={(e) => setPktTitle(e.target.value)} />
               <div style={{ display: 'flex', gap: 8 }}>
-                <div style={unitBoxStyle}>
-                  <input style={unitInputStyle} type="number" value={pktAmount} onChange={(e) => setPktAmount(e.target.value)} placeholder={t('pktAmountPh')} />
-                  <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: 'nowrap' }}>{t('pktUnitPts')}</span>
-                </div>
-                <div style={unitBoxStyle}>
-                  <input style={unitInputStyle} type="number" value={pktCount} onChange={(e) => setPktCount(e.target.value)} placeholder={t('pktCountPh')} />
-                  <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: 'nowrap' }}>{t('pktUnitCnt')}</span>
-                </div>
+                <div style={unitBoxStyle}><input style={unitInputStyle} type="number" value={pktAmount} onChange={(e) => setPktAmount(e.target.value)} /><span style={{ fontSize: 12, opacity: 0.6 }}>PTS</span></div>
+                <div style={unitBoxStyle}><input style={unitInputStyle} type="number" value={pktCount} onChange={(e) => setPktCount(e.target.value)} /><span style={{ fontSize: 12, opacity: 0.6 }}>{zh ? '个' : 'pcs'}</span></div>
               </div>
               <select style={inputStyle} value={pktType} onChange={(e) => setPktType(e.target.value as any)}>
-                <option value="LUCKY">{t('pktLucky')}</option>
-                <option value="EQUAL">{t('pktEqual')}</option>
+                <option value="LUCKY">{zh ? '拼手气红包' : 'Lucky Draw'}</option>
+                <option value="EQUAL">{zh ? '普通均分红包' : 'Equal Split'}</option>
               </select>
-              <Button stretched onClick={handleCreatePacket}>{t('pktSendBtn')}</Button>
+              <Button stretched onClick={handleCreatePacket}>{zh ? '🧧 发送到群聊' : '🧧 Send to Group'}</Button>
             </div>
           </Section>
         )}
-
-        {route === 'PACKETS' && targetId && pktDetail && (
+        {tab === 'ENGAGE' && subView === 'PACKETS' && targetId && pktDetail && (
           <Section header={`🧧 ${pktDetail.packet.title}`}>
-            <Cell subtitle={`${t('pktClaimed')} ${pktDetail.packet.claimed_count} / ${pktDetail.packet.total_count} · ${t('pktStatus')}: ${pktDetail.packet.status}`}>
-              {t('pktPool')}: {pktDetail.packet.total_amount} {t('pktUnitPtsFull')}
-            </Cell>
-            {pktDetail.packet.status === 'ACTIVE' && (
-              <div style={{ padding: '8px 16px' }}>
-                <Button stretched onClick={handleClaimPacket}>{t('pktClaimBtn')}</Button>
-              </div>
-            )}
-            {pktDetail.claims.map((c: any, i: number) => (
-              <Cell key={i} after={`${c.amount} PTS`}>
-                {i === 0 ? '👑 ' : ''}{c.first_name || c.telegram_id}
-              </Cell>
-            ))}
+            <Cell subtitle={`${pktDetail.packet.claimed_count}/${pktDetail.packet.total_count} · ${pktDetail.packet.status}`}>{pktDetail.packet.total_amount} PTS</Cell>
+            {pktDetail.packet.status === 'ACTIVE' && <div style={{ padding: '8px 16px' }}><Button stretched onClick={handleClaimPacket}>{zh ? '🧧 立即开红包' : '🧧 Open'}</Button></div>}
+            {pktDetail.claims.map((c: any, i: number) => <Cell key={i} after={`${c.amount} PTS`}>{i === 0 ? '👑 ' : ''}{c.first_name || c.telegram_id}</Cell>)}
           </Section>
         )}
 
-        {/* ==================== Lucky Draw 2.0 ==================== */}
-        {route === 'RAFFLES' && !targetId && (
-          <Section header={t('rflCreateHeader')}>
-            <GroupSelector />
+        {/* 抽奖子页 */}
+        {tab === 'ENGAGE' && subView === 'RAFFLES' && !targetId && (
+          <Section header={zh ? '🎰 发起幸运抽奖' : '🎰 Create Raffle'}>
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <input style={inputStyle} value={rflTitle} onChange={(e) => setRflTitle(e.target.value)} placeholder={t('rflTitlePh')} />
-
-              <div style={{ fontSize: 13, opacity: 0.7 }}>{t('rflTriggerLabel')}</div>
+              <input style={inputStyle} value={rflTitle} onChange={(e) => setRflTitle(e.target.value)} />
               <select style={inputStyle} value={rflTrigger} onChange={(e) => setRflTrigger(e.target.value as any)}>
-                <option value="MANUAL">{t('rflManual')}</option>
-                <option value="TIME">{t('rflTime')}</option>
-                <option value="PARTICIPANTS">{t('rflPart')}</option>
+                <option value="MANUAL">{zh ? '手动开奖' : 'Manual Draw'}</option>
+                <option value="TIME">{zh ? '定时自动开奖' : 'Scheduled Auto-Draw'}</option>
+                <option value="PARTICIPANTS">{zh ? '满人自动开奖' : 'Goal Auto-Draw'}</option>
               </select>
-
-              {rflTrigger === 'TIME' && (
-                <input style={inputStyle} type="datetime-local" value={rflDrawAt} onChange={(e) => setRflDrawAt(e.target.value)} />
-              )}
-
-              {rflTrigger === 'PARTICIPANTS' && (
-                <div style={unitBoxStyle}>
-                  <input style={unitInputStyle} type="number" value={rflTargetCount} onChange={(e) => setRflTargetCount(e.target.value)} placeholder={t('rflTargetPh')} />
-                  <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: 'nowrap' }}>{t('rflTargetUnit')}</span>
-                </div>
-              )}
-
-              <div style={{ fontSize: 13, opacity: 0.7, marginTop: 4 }}>{t('rflPrizesLabel')}</div>
+              {rflTrigger === 'TIME' && <input style={inputStyle} type="datetime-local" value={rflDrawAt} onChange={(e) => setRflDrawAt(e.target.value)} />}
+              {rflTrigger === 'PARTICIPANTS' && <div style={unitBoxStyle}><input style={unitInputStyle} type="number" value={rflTargetCount} onChange={(e) => setRflTargetCount(e.target.value)} /><span style={{ fontSize: 12, opacity: 0.6 }}>{zh ? '人开奖' : 'users'}</span></div>}
               {rflPrizes.map((p, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <input
-                    style={{ ...inputStyle, flex: 2 }}
-                    value={p.prizeName}
-                    onChange={(e) => {
-                      const next = [...rflPrizes];
-                      next[idx].prizeName = e.target.value;
-                      setRflPrizes(next);
-                    }}
-                    placeholder={t('rflPrizePh')}
-                  />
-                  <div style={{ ...unitBoxStyle, flex: 1 }}>
-                    <input
-                      style={unitInputStyle}
-                      type="number"
-                      value={p.winnerQuota}
-                      onChange={(e) => {
-                        const next = [...rflPrizes];
-                        next[idx].winnerQuota = e.target.value;
-                        setRflPrizes(next);
-                      }}
-                    />
-                    <span style={{ fontSize: 13, opacity: 0.65, marginLeft: 4 }}>{t('rflQuotaUnit')}</span>
-                  </div>
-                  {rflPrizes.length > 1 && (
-                    <button
-                      onClick={() => setRflPrizes(rflPrizes.filter((_, i) => i !== idx))}
-                      style={{ border: 'none', background: 'transparent', color: '#e53935', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}
-                    >
-                      ×
-                    </button>
-                  )}
+                <div key={idx} style={{ display: 'flex', gap: 6 }}>
+                  <input style={{ ...inputStyle, flex: 2 }} value={p.prizeName} onChange={(e) => { const n = [...rflPrizes]; n[idx].prizeName = e.target.value; setRflPrizes(n); }} />
+                  <input style={{ ...inputStyle, flex: 1 }} type="number" value={p.winnerQuota} onChange={(e) => { const n = [...rflPrizes]; n[idx].winnerQuota = e.target.value; setRflPrizes(n); }} />
                 </div>
               ))}
-
-              <Button
-                size="s"
-                mode="bezeled"
-                onClick={() => setRflPrizes([...rflPrizes, { prizeName: t('rflNewPrizeDef'), winnerQuota: '5' }])}
-              >
-                {t('rflAddPrize')}
-              </Button>
-
-              <Button stretched onClick={handleCreateRaffle}>{t('rflSendBtn')}</Button>
+              <Button size="s" mode="bezeled" onClick={() => setRflPrizes([...rflPrizes, { prizeName: zh ? '三等奖：幸运奖' : '3rd Prize', winnerQuota: '5' }])}>+ {zh ? '添加奖项' : 'Add Tier'}</Button>
+              <Button stretched onClick={handleCreateRaffle}>{zh ? '🎰 发布抽奖到群聊' : '🎰 Post Raffle'}</Button>
             </div>
           </Section>
         )}
-
-        {route === 'RAFFLES' && targetId && rflDetail && (
+        {tab === 'ENGAGE' && subView === 'RAFFLES' && targetId && rflDetail && (
           <Section header={`🎰 ${rflDetail.raffle.title}`}>
-            <Cell subtitle={`${t('rflParticipants')}: ${rflDetail.raffle.participant_count} ${t('rflPersonUnit')} · ${t('rflMode')}: ${rflDetail.raffle.trigger_type} · ${rflDetail.raffle.status}`}>
-              {t('rflPrizesPrefix')}{rflDetail.prizes.map((p: any) => `${p.prize_name}×${p.winner_quota}`).join(' / ')}
-            </Cell>
+            <Cell subtitle={`${rflDetail.raffle.participant_count} · ${rflDetail.raffle.trigger_type} · ${rflDetail.raffle.status}`}>{rflDetail.prizes.map((p: any) => `${p.prize_name}×${p.winner_quota}`).join(' / ')}</Cell>
             {rflDetail.raffle.status === 'OPEN' && (
               <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <Button stretched onClick={handleEnterRaffle}>{t('rflEnterBtn')}</Button>
-                <Button stretched mode="outline" onClick={handleDrawRaffle}>{t('rflDrawBtn')}</Button>
+                <Button stretched onClick={async () => { const r = await apiFetch(`/api/raffles/${rflDetail.raffle.id}/enter`, { method: 'POST' }); setMsg(r.ok ? '✅ 参与成功' : r.error); apiFetch(`/api/raffles/${rflDetail.raffle.id}`).then((d) => d.ok && setRflDetail(d)); }}>{zh ? '🎰 免费参与抽奖' : '🎰 Enter'}</Button>
+                <Button stretched mode="outline" onClick={async () => { const r = await apiFetch(`/api/raffles/${rflDetail.raffle.id}/draw`, { method: 'POST' }); setMsg(r.ok ? '🎉 已开奖' : r.error); apiFetch(`/api/raffles/${rflDetail.raffle.id}`).then((d) => d.ok && setRflDetail(d)); }}>{zh ? '🎲 群主立即开奖' : '🎲 Draw Now'}</Button>
               </div>
             )}
-            {rflDetail.winners.map((w: any, i: number) => (
-              <Cell key={i} subtitle={`${t('rflClaimCode')}${w.claim_code}`} after={w.prize_name}>
-                🏆 {w.first_name || w.telegram_id}
-              </Cell>
-            ))}
+            {rflDetail.winners.map((w: any, i: number) => <Cell key={i} subtitle={w.claim_code} after={w.prize_name}>🏆 {w.first_name || w.telegram_id}</Cell>)}
           </Section>
         )}
 
-        {/* ==================== Events ==================== */}
-        {route === 'EVENTS' && !targetId && (
-          <Section header={t('evtCreateHeader')}>
-            <GroupSelector />
+        {/* 活动与投票子页 */}
+        {tab === 'ENGAGE' && subView === 'EVENTS' && !targetId && (
+          <Section header={zh ? '📅 发布活动报名' : '📅 Create Event'}>
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <input style={inputStyle} value={evtTitle} onChange={(e) => setEvtTitle(e.target.value)} placeholder={t('evtTitlePh')} />
-              <input style={inputStyle} value={evtLoc} onChange={(e) => setEvtLoc(e.target.value)} placeholder={t('evtLocPh')} />
-              <div style={unitBoxStyle}>
-                <input style={unitInputStyle} type="number" value={evtMax} onChange={(e) => setEvtMax(e.target.value)} placeholder={t('evtMaxPh')} />
-                <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: 'nowrap' }}>{t('rflPersonUnit') || 'pax'}</span>
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
-                <input type="checkbox" checked={evtWaitlist} onChange={(e) => setEvtWaitlist(e.target.checked)} />
-                {t('evtWaitlist')}
-              </label>
-              <Button stretched onClick={handleCreateEvent}>{t('evtSendBtn')}</Button>
+              <input style={inputStyle} value={evtTitle} onChange={(e) => setEvtTitle(e.target.value)} />
+              <input style={inputStyle} value={evtLoc} onChange={(e) => setEvtLoc(e.target.value)} />
+              <input style={inputStyle} type="number" value={evtMax} onChange={(e) => setEvtMax(e.target.value)} placeholder="Max" />
+              <label style={{ fontSize: 13 }}><input type="checkbox" checked={evtWaitlist} onChange={(e) => setEvtWaitlist(e.target.checked)} /> {zh ? '满员自动候补' : 'Auto waitlist'}</label>
+              <Button stretched onClick={handleCreateEvent}>{zh ? '📅 发布到群聊' : '📅 Post Event'}</Button>
             </div>
           </Section>
         )}
-
-        {route === 'EVENTS' && targetId && evtDetail && (
+        {tab === 'ENGAGE' && subView === 'EVENTS' && targetId && evtDetail && (
           <Section header={`📅 ${evtDetail.event.title}`}>
-            <Cell subtitle={`${t('evtLocLabel')}${evtDetail.event.location || t('evtLocDef')} · ${t('evtMaxLabel')}${evtDetail.event.max_participants || t('evtUnlimited')}`}>
-              {t('evtCurrent')}{evtDetail.members.length} {t('rflPersonUnit')}
-            </Cell>
+            <Cell subtitle={evtDetail.event.location}>{zh ? '已报' : 'Joined'}: {evtDetail.members.length}</Cell>
             <div style={{ padding: '8px 16px', display: 'flex', gap: 8 }}>
-              <Button stretched onClick={() => handleEventAction('join')}>{t('evtJoinBtn')}</Button>
-              <Button stretched mode="outline" onClick={() => handleEventAction('cancel')}>{t('evtCancelBtn')}</Button>
+              <Button stretched onClick={async () => { const r = await apiFetch(`/api/events/${evtDetail.event.id}/join`, { method: 'POST' }); setMsg(r.ok ? '✅ 报名成功' : r.error); apiFetch(`/api/events/${evtDetail.event.id}`).then((d) => d.ok && setEvtDetail(d)); }}>{zh ? '✅ 报名' : '✅ RSVP'}</Button>
+              <Button stretched mode="outline" onClick={async () => { const r = await apiFetch(`/api/events/${evtDetail.event.id}/cancel`, { method: 'POST' }); setMsg(r.ok ? '已取消' : r.error); apiFetch(`/api/events/${evtDetail.event.id}`).then((d) => d.ok && setEvtDetail(d)); }}>{zh ? '取消' : 'Cancel'}</Button>
             </div>
-            {evtDetail.members.map((m: any, i: number) => (
-              <Cell key={i} after={m.status === 'CONFIRMED' ? t('evtConfirmed') : t('evtWaitlisted')}>
-                {i + 1}. {m.first_name || m.telegram_id}
-              </Cell>
-            ))}
+            {evtDetail.members.map((m: any, i: number) => <Cell key={i} after={m.status}>{i + 1}. {m.first_name || m.telegram_id}</Cell>)}
           </Section>
         )}
-
-        {/* ==================== Polls ==================== */}
-        {route === 'POLLS' && !targetId && (
-          <Section header={t('polCreateHeader')}>
-            <GroupSelector />
+        {tab === 'ENGAGE' && subView === 'POLLS' && !targetId && (
+          <Section header={zh ? '📊 发起群组投票' : '📊 Create Poll'}>
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <input style={inputStyle} value={polQuestion} onChange={(e) => setPolQuestion(e.target.value)} placeholder={t('polQPh')} />
-              <textarea
-                style={{ ...inputStyle, minHeight: 90, resize: 'vertical' }}
-                value={polOptionsText}
-                onChange={(e) => setPolOptionsText(e.target.value)}
-                placeholder={t('polOptPh')}
-              />
-              <div style={{ display: 'flex', gap: 16, fontSize: 14 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <input type="checkbox" checked={polMultiple} onChange={(e) => setPolMultiple(e.target.checked)} />
-                  {t('polMulti')}
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <input type="checkbox" checked={polAnonymous} onChange={(e) => setPolAnonymous(e.target.checked)} />
-                  {t('polAnon')}
-                </label>
+              <input style={inputStyle} value={polQuestion} onChange={(e) => setPolQuestion(e.target.value)} />
+              <textarea style={{ ...inputStyle, minHeight: 80 }} value={polOptionsText} onChange={(e) => setPolOptionsText(e.target.value)} />
+              <div style={{ display: 'flex', gap: 12, fontSize: 13 }}>
+                <label><input type="checkbox" checked={polMultiple} onChange={(e) => setPolMultiple(e.target.checked)} /> {zh ? '多选' : 'Multi'}</label>
+                <label><input type="checkbox" checked={polAnonymous} onChange={(e) => setPolAnonymous(e.target.checked)} /> {zh ? '匿名' : 'Anon'}</label>
               </div>
-              <Button stretched onClick={handleCreatePoll}>{t('polSendBtn')}</Button>
+              <Button stretched onClick={handleCreatePoll}>{zh ? '📊 发布投票' : '📊 Post Poll'}</Button>
             </div>
           </Section>
         )}
-
-        {route === 'POLLS' && targetId && polDetail && (
+        {tab === 'ENGAGE' && subView === 'POLLS' && targetId && polDetail && (
           <Section header={`📊 ${polDetail.poll.question}`}>
-            <Cell subtitle={`${polDetail.poll.is_multiple ? t('polMultiTag') : t('polSingle')} · ${polDetail.poll.is_anonymous ? t('polAnonTag') : t('polPublicTag')}`}>
-              {t('polTapHint')}
-            </Cell>
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {(polDetail.poll.options || []).map((opt: string, idx: number) => {
-                const checked = polSelected.includes(idx);
-                const count = polDetail.counts?.[idx] || 0;
-                return (
-                  <div
-                    key={idx}
-                    onClick={() => {
-                      if (polDetail.poll.is_multiple) {
-                        setPolSelected(checked ? polSelected.filter((i) => i !== idx) : [...polSelected, idx]);
-                      } else {
-                        setPolSelected([idx]);
-                      }
-                    }}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: 10,
-                      border: checked ? '1.5px solid #2481cc' : '1px solid rgba(128,128,128,0.3)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <span>{checked ? '☑️ ' : '⬜️ '}{opt}</span>
-                    <span style={{ opacity: 0.7 }}>{count} {t('polVoteUnit')}</span>
-                  </div>
-                );
-              })}
-              <Button stretched onClick={handleVotePoll}>{t('polVoteBtn')}</Button>
+              {(polDetail.poll.options || []).map((opt: string, idx: number) => (
+                <div key={idx} onClick={() => setPolSelected(polDetail.poll.is_multiple ? (polSelected.includes(idx) ? polSelected.filter((i) => i !== idx) : [...polSelected, idx]) : [idx])} style={{ padding: 10, borderRadius: 10, border: polSelected.includes(idx) ? '1.5px solid #2481cc' : '1px solid rgba(128,128,128,0.3)', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{polSelected.includes(idx) ? '☑️ ' : '⬜️ '}{opt}</span><span>{polDetail.counts?.[idx] || 0}</span>
+                </div>
+              ))}
+              <Button stretched onClick={async () => { const r = await apiFetch(`/api/polls/${polDetail.poll.id}/vote`, { method: 'POST', body: JSON.stringify({ optionIndices: polSelected }) }); setMsg(r.ok ? '✅ 投票成功' : r.error); apiFetch(`/api/polls/${polDetail.poll.id}`).then((d) => d.ok && setPolDetail(d)); }}>{zh ? '✅ 提交投票' : '✅ Vote'}</Button>
             </div>
           </Section>
         )}
 
-        {/* ==================== Group Ops & Pro ==================== */}
-        {route === 'ADMIN' && (
+        {/* ==================== TAB 2: 福利与商城（群友/群主权限分离） ==================== */}
+        {tab === 'STORE' && (
           <>
-            <Section header={t('proHeader')}>
-              <GroupSelector />
-              <Cell
-                after={<Badge type="number">{adminData?.group?.plan === 'PRO' ? 'PRO 👑' : 'FREE'}</Badge>}
-                subtitle={adminData?.group?.plan === 'PRO' ? t('proActiveSub') : t('proFreeSub')}
-              >
-                {t('proPlanLabel')}
+            <Section header={zh ? '📅 每日签到' : '📅 Daily Check-in'}>
+              <Cell subtitle={zh ? '连续 3 天 +20 分 · 7 天 +30 分' : '3d streak +20 · 7d +30 PTS'}>
+                {zh ? `我的可用积分：${storeData.balance}` : `Balance: ${storeData.balance} PTS`}
               </Cell>
-              {adminData?.group?.plan !== 'PRO' && (
+              <div style={{ padding: '8px 16px' }}>
+                <Button stretched onClick={handleCheckin}>{zh ? '✅ 立即每日签到' : '✅ Check In Today'}</Button>
+              </div>
+            </Section>
+
+            <Section header={zh ? '🎁 群积分商城' : '🎁 Points Store'}>
+              {storeData.items?.length > 0 ? storeData.items.map((it: any) => (
+                <Cell
+                  key={it.id}
+                  subtitle={`${it.cost_points} PTS`}
+                  after={
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <Button size="s" onClick={async () => { const r = await apiFetch(`/api/groups/${selectedGroupId}/store/redeem`, { method: 'POST', body: JSON.stringify({ itemId: it.id }) }); setMsg(r.ok ? `🎉 兑换成功：${r.redeemCode}` : r.error); refreshStore(selectedGroupId); }}>{zh ? '兑换' : 'Redeem'}</Button>
+                      {storeData.isAdmin && <Button size="s" mode="bezeled" onClick={async () => { await apiFetch(`/api/groups/${selectedGroupId}/store/items/${it.id}`, { method: 'DELETE' }); refreshStore(selectedGroupId); }}>×</Button>}
+                    </div>
+                  }
+                >
+                  {it.name}
+                </Cell>
+              )) : <Cell>{zh ? '暂未上架商品' : 'No items yet'}</Cell>}
+
+              {storeData.isAdmin && (
                 <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Button stretched onClick={() => handleUpgradePro('NORMAL')}>{t('proBuyBtn')}</Button>
-                  <Button stretched mode="bezeled" onClick={() => handleUpgradePro('TEST')}>{t('proTestBtn')}</Button>
+                  <div style={{ fontSize: 12, opacity: 0.65 }}>{zh ? '👑 群主专属：上架新商品' : '👑 Admin: Add Item'}</div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input style={{ ...inputStyle, flex: 2 }} value={newItemName} onChange={(e) => setNewItemName(e.target.value)} placeholder={zh ? '商品名称' : 'Item name'} />
+                    <input style={{ ...inputStyle, flex: 1 }} type="number" value={newItemCost} onChange={(e) => setNewItemCost(e.target.value)} />
+                  </div>
+                  <Button size="s" mode="bezeled" onClick={async () => { const r = await apiFetch(`/api/groups/${selectedGroupId}/store/items`, { method: 'POST', body: JSON.stringify({ name: newItemName, costPoints: Number(newItemCost) }) }); setMsg(r.ok ? '✅ 已上架' : r.error); setNewItemName(''); refreshStore(selectedGroupId); }}>+ {zh ? '上架商品' : 'Add Item'}</Button>
                 </div>
               )}
-            </Section>
-
-            <Section header={t('welcomeHeader')}>
-              <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
-                  <input type="checkbox" checked={welcomeEnabled} onChange={(e) => setWelcomeEnabled(e.target.checked)} />
-                  {t('welcomeEnable')}
-                </label>
-                <textarea
-                  style={{ ...inputStyle, minHeight: 75 }}
-                  value={welcomeText}
-                  onChange={(e) => setWelcomeText(e.target.value)}
-                  placeholder={t('welcomePh')}
-                />
-                <Button stretched onClick={handleSaveSettings}>{t('saveSettings')}</Button>
-              </div>
-            </Section>
-
-            <Section header={t('lbHeader')}>
-              {adminData?.leaderboard?.length > 0 ? (
-                adminData.leaderboard.map((u: any, i: number) => (
-                  <Cell key={i} after={`${u.balance} ${t('pktUnitPts')}`}>
-                    {i + 1}. {u.first_name || u.telegram_id}
-                  </Cell>
-                ))
-              ) : (
-                <Cell subtitle={t('lbEmptySub')}>{t('lbEmpty')}</Cell>
-              )}
-            </Section>
-          </>
-        )}
-        
-        {/* ==================== 每日签到与积分商城 ==================== */}
-        {route === "STORE" && (
-          <>
-            <Section header={lang === "zh" ? "📅 每日签到" : "📅 Daily Check-in"}>
-              <GroupSelector />
-              <Cell subtitle={lang === "zh" ? "连续签到 3 天 +20 分，7 天 +30 分" : "3-day streak +20 PTS, 7-day +30 PTS"}>
-                {lang === "zh" ? `当前可用积分：${storeData.balance} 积分` : `Your Balance: ${storeData.balance} PTS`}
-              </Cell>
-              <div style={{ padding: "8px 16px" }}>
-                <Button stretched onClick={handleCheckin}>
-                  {lang === "zh" ? "✅ 立即每日签到" : "✅ Check In Today"}
-                </Button>
-              </div>
-            </Section>
-
-            <Section header={lang === "zh" ? "🎁 群积分商城" : "🎁 Points Store"}>
-              {storeData.items?.length > 0 ? (
-                storeData.items.map((it: any) => (
-                  <Cell
-                    key={it.id}
-                    subtitle={`${it.cost_points} ${t("pktUnitPts")}`}
-                    after={<Button size="s" onClick={() => handleRedeem(it.id)}>{lang === "zh" ? "兑换" : "Redeem"}</Button>}
-                  >
-                    {it.name}
-                  </Cell>
-                ))
-              ) : (
-                <Cell>{lang === "zh" ? "群主暂未上架商品" : "No items yet"}</Cell>
-              )}
-              <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-                <div style={{ fontSize: 12, opacity: 0.65 }}>{lang === "zh" ? "群主上架新商品" : "Admin: Add Store Item"}</div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <input style={{ ...inputStyle, flex: 2 }} value={newItemName} onChange={(e) => setNewItemName(e.target.value)} placeholder={lang === "zh" ? "商品名称（如：月卡兑换码）" : "Item name"} />
-                  <input style={{ ...inputStyle, flex: 1 }} type="number" value={newItemCost} onChange={(e) => setNewItemCost(e.target.value)} placeholder="PTS" />
-                </div>
-                <Button size="s" mode="bezeled" onClick={handleAddItem}>{lang === "zh" ? "+ 上架商品" : "+ Add Item"}</Button>
-              </div>
             </Section>
 
             {storeData.orders?.length > 0 && (
-              <Section header={lang === "zh" ? "🧾 我的兑换记录" : "🧾 My Redemptions"}>
-                {storeData.orders.map((o: any) => (
-                  <Cell key={o.id} subtitle={`${t("rflClaimCode")}${o.redeem_code}`} after={`-${o.cost_points}`}>
-                    {o.item_name}
-                  </Cell>
-                ))}
+              <Section header={zh ? '🧾 我的兑换记录' : '🧾 My Orders'}>
+                {storeData.orders.map((o: any) => <Cell key={o.id} subtitle={o.redeem_code} after={`-${o.cost_points}`}>{o.item_name}</Cell>)}
               </Section>
             )}
           </>
         )}
 
-        {/* ==================== 反垃圾与定时播报 ==================== */}
-        {route === "GUARD" && (
+        {/* ==================== TAB 3: 群组运营（反垃圾 + 播报 + 欢迎语 + 榜单） ==================== */}
+        {tab === 'OPS' && (
           <>
-            <Section header={lang === "zh" ? "🛡️ 反垃圾广告与防外链" : "🛡️ Anti-Spam & Link Filter"}>
-              <GroupSelector />
-              <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
-                  <input type="checkbox" checked={antiSpam} onChange={(e) => setAntiSpam(e.target.checked)} />
-                  {lang === "zh" ? "开启自动删帖拦截（放行群管理员）" : "Enable Auto-Delete Filter (Admins exempt)"}
-                </label>
-                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
-                  <input type="checkbox" checked={banLinks} onChange={(e) => setBanLinks(e.target.checked)} />
-                  {lang === "zh" ? "自动删除网址链接、t.me 频道与 @广告" : "Auto-delete URLs, t.me links & @mentions"}
-                </label>
-                <textarea
-                  style={{ ...inputStyle, minHeight: 70 }}
-                  value={bannedKws}
-                  onChange={(e) => setBannedKws(e.target.value)}
-                  placeholder={lang === "zh" ? "违禁词（用逗号分隔，例如：兼职,刷单,加微信）" : "Banned keywords (comma-separated)"}
-                />
-                <Button stretched onClick={handleSaveAntiSpam}>{lang === "zh" ? "💾 保存反垃圾规则" : "💾 Save Anti-Spam Rules"}</Button>
+            <Section header={zh ? '🛡️ 反垃圾与防外链' : '🛡️ Anti-Spam'}>
+              <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label style={{ fontSize: 13 }}><input type="checkbox" checked={antiSpam} onChange={(e) => setAntiSpam(e.target.checked)} /> {zh ? '开启自动删帖拦截（放行管理员）' : 'Enable Auto-Delete (Admins exempt)'}</label>
+                <label style={{ fontSize: 13 }}><input type="checkbox" checked={banLinks} onChange={(e) => setBanLinks(e.target.checked)} /> {zh ? '拦截外链、t.me 与 @广告' : 'Block URLs & @mentions'}</label>
+                <input style={inputStyle} value={bannedKws} onChange={(e) => setBannedKws(e.target.value)} placeholder={zh ? '违禁词（逗号分隔）' : 'Banned keywords'} />
+                <Button size="s" onClick={async () => { const r = await apiFetch(`/api/groups/${selectedGroupId}/antispam`, { method: 'POST', body: JSON.stringify({ enabled: antiSpam, banLinks, keywords: bannedKws }) }); setMsg(r.ok ? '✅ 已保存' : r.error); }}>{zh ? '💾 保存规则' : '💾 Save'}</Button>
               </div>
             </Section>
 
-            <Section header={lang === "zh" ? "📢 定时周期播报（发新删旧防刷屏）" : "📢 Scheduled Broadcasts (Auto-replace)"}>
-              <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-                <textarea
-                  style={{ ...inputStyle, minHeight: 75 }}
-                  value={bcText}
-                  onChange={(e) => setBcText(e.target.value)}
-                  placeholder={lang === "zh" ? "输入要定时发送到群里的公告或推广文案" : "Broadcast message content"}
-                />
-                <div style={unitBoxStyle}>
-                  <input style={unitInputStyle} type="number" value={bcHours} onChange={(e) => setBcHours(e.target.value)} />
-                  <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6 }}>{lang === "zh" ? "小时/次" : "hours"}</span>
+            <Section header={zh ? '📢 定时周期播报（发新删旧）' : '📢 Auto Broadcasts'}>
+              <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <textarea style={{ ...inputStyle, minHeight: 60 }} value={bcText} onChange={(e) => setBcText(e.target.value)} placeholder={zh ? '播报内容' : 'Message'} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={unitBoxStyle}><input style={unitInputStyle} type="number" value={bcHours} onChange={(e) => setBcHours(e.target.value)} /><span style={{ fontSize: 12, opacity: 0.6 }}>h</span></div>
+                  <Button size="s" onClick={async () => { const r = await apiFetch(`/api/groups/${selectedGroupId}/broadcasts`, { method: 'POST', body: JSON.stringify({ content: bcText, intervalHours: Number(bcHours) }) }); setMsg(r.ok ? '✅ 已发送并定时' : r.error); setBcText(''); refreshAdmin(selectedGroupId); }}>{zh ? '发送并定时' : 'Schedule'}</Button>
                 </div>
-                <Button stretched onClick={handleAddBroadcast}>{lang === "zh" ? "📢 立即发送并开启定时" : "📢 Post & Schedule"}</Button>
               </div>
-              {broadcasts.map((b: any) => (
-                <Cell
-                  key={b.id}
-                  subtitle={lang === "zh" ? `每 ${b.interval_hours} 小时自动播报` : `Every ${b.interval_hours}h`}
-                  after={<Button size="s" mode="bezeled" onClick={() => handleDeleteBroadcast(b.id)}>{lang === "zh" ? "删除" : "Del"}</Button>}
-                >
-                  {b.content}
-                </Cell>
-              ))}
+              {broadcasts.map((b: any) => <Cell key={b.id} subtitle={`${b.interval_hours}h`} after={<Button size="s" mode="bezeled" onClick={async () => { await apiFetch(`/api/groups/${selectedGroupId}/broadcasts/${b.id}`, { method: 'DELETE' }); refreshAdmin(selectedGroupId); }}>×</Button>}>{b.content}</Cell>)}
+            </Section>
+
+            <Section header={zh ? '👋 入群欢迎语 & 🏆 积分榜' : '👋 Welcome & 🏆 Top 20'}>
+              <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label style={{ fontSize: 13 }}><input type="checkbox" checked={welcomeEnabled} onChange={(e) => setWelcomeEnabled(e.target.checked)} /> {zh ? '开启新人欢迎语' : 'Enable Welcome'}</label>
+                <input style={inputStyle} value={welcomeText} onChange={(e) => setWelcomeText(e.target.value)} />
+                <Button size="s" mode="bezeled" onClick={async () => { const r = await apiFetch(`/api/groups/${selectedGroupId}/settings`, { method: 'POST', body: JSON.stringify({ welcomeEnabled, welcomeText }) }); setMsg(r.ok ? '✅ 已保存' : r.error); }}>{zh ? '保存欢迎语' : 'Save'}</Button>
+              </div>
+              {(adminData?.leaderboard || []).slice(0, 10).map((u: any, i: number) => <Cell key={i} after={`${u.balance} PTS`}>{i + 1}. {u.first_name || u.telegram_id}</Cell>)}
             </Section>
           </>
         )}
 
-        
-        {/* ==================== Pro 专享功能中心（8大功能） ==================== */}
-        {route === "PRO_HUB" && (
+        {/* ==================== TAB 4: Pro 专享中心 ==================== */}
+        {tab === 'PRO' && (
           <>
-            <Section header={lang === "zh" ? "💎 Pro 专享中心（当前状态）" : "💎 Pro Feature Hub"}>
-              <GroupSelector />
-              <Cell
-                after={<Badge type="number">{isPro ? "PRO 👑" : "FREE"}</Badge>}
-                subtitle={isPro ? (lang === "zh" ? "已解锁全部 8 项 Pro 专享功能与无限配额" : "All 8 Pro features & unlimited quotas unlocked") : (lang === "zh" ? "升级 Pro 解锁以下全部 8 项高阶变现与涨粉工具" : "Upgrade to Pro to unlock all 8 features below")}
-              >
-                {lang === "zh" ? "当前群组权限" : "Group Tier"}
+            <Section header={zh ? '👑 GroupPilot Pro（Telegram Stars）' : '👑 GroupPilot Pro'}>
+              <Cell after={<Badge type="number">{isPro ? 'PRO 👑' : 'FREE'}</Badge>} subtitle={isPro ? (zh ? '已解锁免广告与全部 8 项 Pro 工具' : 'Ad-free & all 8 Pro tools unlocked') : (zh ? '升级 Pro 立即免广告并解锁全部高阶功能' : 'Go ad-free & unlock all 8 Pro tools')}>
+                {zh ? '当前群组套餐' : 'Group Plan'}
               </Cell>
               {!isPro && (
-                <div style={{ padding: "8px 16px" }}>
-                  <Button stretched onClick={() => setRoute("ADMIN")}>{lang === "zh" ? "⭐ 前往升级 Pro 会员" : "⭐ Upgrade to Pro"}</Button>
+                <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <Button stretched onClick={() => handleUpgradePro('NORMAL')}>⭐ 100 Stars {zh ? '升级 Pro（30天）' : 'Upgrade Pro (30d)'}</Button>
+                  <Button stretched mode="bezeled" onClick={() => handleUpgradePro('TEST')}>🧪 1 Star {zh ? '真机支付测试' : 'Live Test'}</Button>
                 </div>
               )}
             </Section>
 
-            <Section header={lang === "zh" ? "1️⃣ 邀请裂变排行榜（拉新）" : "1️⃣ Referral Invite Leaderboard"}>
-              <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+            <Section header={zh ? '1️⃣ 邀请裂变排行（入群自动 +20 积分）' : '1️⃣ Referral Leaderboard'}>
+              <div style={{ padding: '8px 16px' }}>
                 {inviteData.myLink ? (
-                  <div style={{ fontSize: 13, wordBreak: "break-all", padding: 8, borderRadius: 8, background: "rgba(128,128,128,0.1)" }}>
-                    {lang === "zh" ? "我的专属链接：" : "My Invite Link: "}{inviteData.myLink.invite_url}
-                  </div>
+                  <div style={{ fontSize: 12, wordBreak: 'break-all', padding: 8, borderRadius: 8, background: 'rgba(128,128,128,0.1)' }}>{inviteData.myLink.invite_url}</div>
                 ) : (
-                  <Button stretched mode="bezeled" onClick={handleGenInvite}>{lang === "zh" ? "🔗 生成我的专属拉新链接" : "🔗 Generate My Invite Link"}</Button>
+                  <Button stretched mode="bezeled" onClick={async () => { const r = await apiFetch(`/api/groups/${selectedGroupId}/invites`, { method: 'POST' }); setMsg(r.ok ? '✅ 已生成专属链接' : r.error); apiFetch(`/api/groups/${selectedGroupId}/invites`).then((d) => d.ok && setInviteData(d)); }}>{zh ? '🔗 生成我的专属拉新链接' : '🔗 Generate Invite Link'}</Button>
                 )}
               </div>
-              {inviteData.leaderboard?.map((r: any, i: number) => (
-                <Cell key={i} after={`${r.join_count} ${lang === "zh" ? "人" : "joins"}`}>
-                  {i + 1}. {r.first_name || r.creator_id}
-                </Cell>
-              ))}
+              {inviteData.leaderboard?.map((r: any, i: number) => <Cell key={i} after={`${r.join_count} 人`}>{i + 1}. {r.first_name || r.creator_id}</Cell>)}
             </Section>
 
-            <Section header={lang === "zh" ? "2️⃣ 付费进群 · 3️⃣ 强关频道 · 7️⃣ 白标去水印" : "2️⃣ Paid Join · 3️⃣ Force Sub · 7️⃣ White-Label"}>
-              <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ fontSize: 12, opacity: 0.7 }}>{lang === "zh" ? "强制关注频道（填 @频道用户名，留空不启用）" : "Force Join Channel (@username)"}</div>
-                <input style={inputStyle} value={forceChannel} onChange={(e) => setForceChannel(e.target.value)} placeholder="@your_channel" />
-
-                <div style={{ fontSize: 12, opacity: 0.7 }}>{lang === "zh" ? "自定义白标尾巴（替代默认水印）" : "Custom White-Label Footer"}</div>
-                <input style={inputStyle} value={customFooter} onChange={(e) => setCustomFooter(e.target.value)} placeholder="Powered by MyBrand" />
-
-                <div style={{ fontSize: 12, opacity: 0.7 }}>{lang === "zh" ? "付费进群定价（Stars，0 为关闭）" : "Paid Group Access Price (Stars)"}</div>
-                <div style={unitBoxStyle}>
-                  <input style={unitInputStyle} type="number" value={paidStars} onChange={(e) => setPaidStars(e.target.value)} />
-                  <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6 }}>Stars</span>
-                </div>
-
-                <Button stretched onClick={handleSaveProConfig}>{lang === "zh" ? "💾 保存 Pro 专属配置" : "💾 Save Pro Config"}</Button>
-                {Number(paidStars) > 0 && (
-                  <Button stretched mode="outline" onClick={handlePaidJoinTest}>{lang === "zh" ? "🎟️ 测试付费进群收银台" : "🎟️ Test Paid Join Checkout"}</Button>
-                )}
+            <Section header={zh ? '2️⃣ 付费进群 · 3️⃣ 强关频道 · 7️⃣ 白标' : '2️⃣ Paid Join · 3️⃣ Force Sub · 7️⃣ White-Label'}>
+              <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <input style={inputStyle} value={forceChannel} onChange={(e) => setForceChannel(e.target.value)} placeholder={zh ? '强制关注频道（如 @mychannel）' : 'Force channel (@username)'} />
+                <input style={inputStyle} value={customFooter} onChange={(e) => setCustomFooter(e.target.value)} placeholder={zh ? '白标水印尾巴' : 'Custom footer'} />
+                <div style={unitBoxStyle}><input style={unitInputStyle} type="number" value={paidStars} onChange={(e) => setPaidStars(e.target.value)} /><span style={{ fontSize: 12, opacity: 0.6 }}>Stars</span></div>
+                <Button stretched onClick={async () => { const r = await apiFetch(`/api/groups/${selectedGroupId}/pro-config`, { method: 'POST', body: JSON.stringify({ forceChannelId: forceChannel, customFooter, paidJoinStars: Number(paidStars), paidJoinDays: 30 }) }); setMsg(r.ok ? '✅ 已保存 Pro 配置' : r.error); }}>{zh ? '💾 保存 Pro 配置' : '💾 Save Pro Config'}</Button>
               </div>
             </Section>
 
-            <Section header={lang === "zh" ? "4️⃣ 多群联动（一键群发 + 跨群全局拉黑）" : "4️⃣ Multi-Group Sync (Broadcast & Global Ban)"}>
-              <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
-                <textarea style={{ ...inputStyle, minHeight: 65 }} value={multiBcText} onChange={(e) => setMultiBcText(e.target.value)} placeholder={lang === "zh" ? "输入要同步发到名下所有 Pro 群的消息" : "Broadcast to all your Pro groups"} />
-                <Button stretched mode="bezeled" onClick={handleMultiBroadcast}>{lang === "zh" ? "📡 一键同步群发所有 Pro 群" : "📡 Broadcast to All Pro Groups"}</Button>
-                <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
-                  <input style={{ ...inputStyle, flex: 2 }} type="number" value={banUid} onChange={(e) => setBanUid(e.target.value)} placeholder={lang === "zh" ? "输入骗子 Telegram ID" : "Target Telegram User ID"} />
-                  <Button size="s" onClick={handleGlobalBan}>{lang === "zh" ? "全局拉黑" : "Global Ban"}</Button>
+            <Section header={zh ? '4️⃣ 多群联动 · 5️⃣ 自动发卡 · 6️⃣ 私聊发 CSV' : '4️⃣ Multi-Group · 5️⃣ Auto-Keys · 6️⃣ CSV'}>
+              <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input style={{ ...inputStyle, flex: 2 }} value={multiBcText} onChange={(e) => setMultiBcText(e.target.value)} placeholder={zh ? '多群同步群发内容' : 'Multi-group broadcast'} />
+                  <Button size="s" onClick={async () => { const r = await apiFetch('/api/pro/multi-broadcast', { method: 'POST', body: JSON.stringify({ content: multiBcText }) }); setMsg(r.ok ? `✅ 已发 ${r.sentCount} 群` : r.error); setMultiBcText(''); }}>{zh ? '群发' : 'Send'}</Button>
                 </div>
-              </div>
-            </Section>
-
-            <Section header={lang === "zh" ? "5️⃣ 商城卡密批量导入（自动发货）" : "5️⃣ Batch Key Import (Auto-Delivery)"}>
-              <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input style={{ ...inputStyle, flex: 2 }} type="number" value={banUid} onChange={(e) => setBanUid(e.target.value)} placeholder={zh ? '跨群全局拉黑 ID' : 'Global Ban User ID'} />
+                  <Button size="s" mode="bezeled" onClick={async () => { const r = await apiFetch('/api/pro/global-ban', { method: 'POST', body: JSON.stringify({ targetTelegramId: Number(banUid) }) }); setMsg(r.ok ? `🛡️ 已封 ${r.bannedCount} 群` : r.error); setBanUid(''); }}>{zh ? '拉黑' : 'Ban'}</Button>
+                </div>
                 <select style={inputStyle} value={codeItemId} onChange={(e) => setCodeItemId(e.target.value)}>
-                  {(storeData.items || []).map((it: any) => (
-                    <option key={it.id} value={it.id}>{it.name}</option>
-                  ))}
+                  {(storeData.items || []).map((it: any) => <option key={it.id} value={it.id}>{it.name}</option>)}
                 </select>
-                <textarea style={{ ...inputStyle, minHeight: 75 }} value={codesText} onChange={(e) => setCodesText(e.target.value)} placeholder={lang === "zh" ? "每行粘贴一条卡密/兑换码，兑换时 Bot 自动私聊发货" : "One key/code per line"} />
-                <Button stretched mode="bezeled" onClick={handleImportCodes}>{lang === "zh" ? "📥 批量导入卡密库存" : "📥 Import Keys"}</Button>
-              </div>
-            </Section>
-
-            <Section header={lang === "zh" ? "6️⃣ 数据一键导出 & 8️⃣ 无限配额" : "6️⃣ CSV Export & 8️⃣ Unlimited Quotas"}>
-              <div style={{ padding: "8px 16px" }}>
-                <Button stretched onClick={handleExportCsv}>{lang === "zh" ? "📊 一键导出群积分榜 (CSV)" : "📊 Export Leaderboard (CSV)"}</Button>
+                <textarea style={{ ...inputStyle, minHeight: 55 }} value={codesText} onChange={(e) => setCodesText(e.target.value)} placeholder={zh ? '每行粘贴一条卡密，兑换自动私发' : 'One key per line'} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button stretched size="s" mode="bezeled" onClick={async () => { const r = await apiFetch(`/api/groups/${selectedGroupId}/store/items/${codeItemId}/codes`, { method: 'POST', body: JSON.stringify({ codesText }) }); setMsg(r.ok ? `✅ 已导入 ${r.imported} 条` : r.error); setCodesText(''); }}>{zh ? '📥 导入卡密' : '📥 Import Keys'}</Button>
+                  <Button stretched size="s" onClick={handleExportCsv}>{zh ? '📊 私聊发 CSV' : '📊 DM CSV'}</Button>
+                </div>
               </div>
             </Section>
           </>
         )}
 
         <AdSlot pos="BOTTOM" />
+      </div>
+
+      {/* 底部 4-Tab 原生导航栏 */}
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderTop: '1px solid rgba(128,128,128,0.2)', backdropFilter: 'blur(12px)', background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.92)', padding: '6px 0 10px' }}>
+        {[
+          { id: 'ENGAGE', icon: '🎉', label: zh ? '互动' : 'Engage' },
+          { id: 'STORE', icon: '🎁', label: zh ? '福利' : 'Store' },
+          { id: 'OPS', icon: '🛡️', label: zh ? '运营' : 'Ops' },
+          { id: 'PRO', icon: '💎', label: 'Pro' },
+        ].map((t) => {
+          const active = tab === t.id;
+          return (
+            <div key={t.id} onClick={() => { setTab(t.id as Tab); setSubView('NONE'); setTargetId(null); }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, cursor: 'pointer', opacity: active ? 1 : 0.55, color: active ? '#2481cc' : 'inherit' }}>
+              <span style={{ fontSize: 20 }}>{t.icon}</span>
+              <span style={{ fontSize: 11, fontWeight: active ? 700 : 500 }}>{t.label}</span>
+            </div>
+          );
+        })}
       </div>
     </AppRoot>
   );

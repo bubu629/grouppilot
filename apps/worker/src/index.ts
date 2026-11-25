@@ -547,7 +547,7 @@ app.post("/api/polls/:id/vote", async (c) => {
 
 app.get("/api/groups/:id/admin", async (c) => {
   const groupId = Number(c.req.param("id"));
-  const group = await c.env.DB.prepare("SELECT group_id, title, plan, welcome_enabled, welcome_text, anti_spam_enabled, ban_links, banned_keywords, force_channel_id, custom_footer, paid_join_stars, paid_join_days FROM groups WHERE group_id = ?").bind(groupId).first();
+  const group = await c.env.DB.prepare("SELECT group_id, title, plan, plan_expires_at, welcome_enabled, welcome_text, anti_spam_enabled, ban_links, banned_keywords, force_channel_id, custom_footer, paid_join_stars, paid_join_days FROM groups WHERE group_id = ?").bind(groupId).first();
   if (!group) return c.json({ ok: false, error: "NOT_FOUND" }, 404);
   const leaderboard = await c.env.DB.prepare(`
     SELECT p.telegram_id, p.balance, p.total_earned, u.first_name
@@ -646,13 +646,14 @@ app.post("/api/groups/:id/checkin", async (c) => {
 app.get("/api/groups/:id/store", async (c) => {
   const user = c.get("tgUser");
   const groupId = Number(c.req.param("id"));
+  const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, groupId, user.id);
   const acct = await c.env.DB.prepare("SELECT balance FROM points_accounts WHERE group_id = ? AND telegram_id = ?")
     .bind(groupId, user.id).first<any>();
   const items = await c.env.DB.prepare("SELECT * FROM store_items WHERE group_id = ? ORDER BY created_at DESC")
     .bind(groupId).all();
   const myOrders = await c.env.DB.prepare("SELECT * FROM store_redemptions WHERE group_id = ? AND telegram_id = ? ORDER BY created_at DESC LIMIT 10")
     .bind(groupId, user.id).all();
-  return c.json({ ok: true, balance: acct?.balance || 0, items: items.results || [], orders: myOrders.results || [] });
+  return c.json({ ok: true, isAdmin, balance: acct?.balance || 0, items: items.results || [], orders: myOrders.results || [] });
 });
 
 app.post("/api/groups/:id/store/items", async (c) => {
@@ -671,6 +672,15 @@ app.post("/api/groups/:id/store/items", async (c) => {
   await c.env.DB.prepare("INSERT INTO store_items (id, group_id, name, cost_points, stock, created_at) VALUES (?, ?, ?, ?, ?, ?)")
     .bind(id, groupId, body.name, Math.max(1, Number(body.costPoints) || 100), Number(body.stock ?? -1), Date.now()).run();
   return c.json({ ok: true, id });
+});
+
+app.delete("/api/groups/:id/store/items/:itemId", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, groupId, user.id);
+  if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
+  await c.env.DB.prepare("DELETE FROM store_items WHERE id = ? AND group_id = ?").bind(c.req.param("itemId"), groupId).run();
+  return c.json({ ok: true });
 });
 
 app.post("/api/groups/:id/store/redeem", async (c) => {
@@ -901,7 +911,13 @@ app.get("/api/groups/:id/export/leaderboard", async (c) => {
   `).bind(groupId).all<any>();
 
   const csv = ["telegram_id,name,balance,total_earned", ...(rows.results || []).map((r) => `${r.telegram_id},"${(r.first_name || "").replace(/"/g, "")}",${r.balance},${r.total_earned}`)].join("\n");
-  return c.json({ ok: true, csv });
+  const user = c.get("tgUser");
+  const form = new FormData();
+  form.append("chat_id", String(user.id));
+  form.append("caption", "📊 群积分排行榜导出文件（CSV）");
+  form.append("document", new Blob(["\uFEFF" + csv], { type: "text/csv" }), "leaderboard_" + groupId + ".csv");
+  await fetch(`https://api.telegram.org/bot${c.env.TELEGRAM_BOT_TOKEN}/sendDocument`, { method: "POST", body: form });
+  return c.json({ ok: true, sentToDm: true });
 });
 
 // ==================== 4. Webhook & Cron ====================
