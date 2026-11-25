@@ -277,7 +277,7 @@ export default function App() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(128,128,128,0.2)', whiteSpace: 'nowrap', flexShrink: 0 }}>{zh ? '顶置广告' : 'TOP AD'}</span>
               <span style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {ad ? ad.title : (zh ? '🔥 顶部独家赞助位招租 · 50 Stars/7天' : '🔥 Exclusive Top Slot · 50 Stars/7d')}
+                {ad ? ad.title : (zh ? '🔥 顶置赞助招租 · 50⭐/7天' : '🔥 Exclusive Top Slot · 50⭐/7d')}
               </span>
             </div>
           </div>
@@ -311,7 +311,7 @@ export default function App() {
         ))}
         <div style={{ padding: '7px 10px', borderRadius: 12, border: '1px dashed rgba(128,128,128,0.35)', background: 'rgba(15, 23, 42, 0.55)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
           <span onClick={() => { setAdPos('BOTTOM'); setShowAdBuy(true); }} style={{ fontSize: 12, opacity: 0.75, cursor: 'pointer' }}>
-            {activeAds.bottoms.length >= 3 ? (zh ? '🔒 尾部广告位已满（3/3）' : '🔒 Bottom Ad Slots Full (3/3)') : (zh ? `📢 尾部推广位招租（剩 ${3 - activeAds.bottoms.length}/3 位 · 30 Stars/7天）` : `📢 Bottom Slots (${3 - activeAds.bottoms.length}/3 left · 30 Stars/7d)`)}
+            {activeAds.bottoms.length >= 3 ? (zh ? '🔒 尾部广告位已满（3/3）' : '🔒 Bottom Ad Slots Full (3/3)') : (zh ? `📢 尾部招租（剩 ${3 - activeAds.bottoms.length}/3 位 · 30⭐/7天）` : `📢 Bottom Slots (${3 - activeAds.bottoms.length}/3 left · 30⭐/7d)`)}
           </span>
           <div style={{ display: 'flex', gap: 4 }}>
             {activeAds.bottoms.length < 3 && (
@@ -450,8 +450,8 @@ export default function App() {
           <Section header={zh ? '📢 自助投放广告位（付款即上线）' : '📢 Buy Ad Slot (Instant Live)'}>
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <select style={inputStyle} value={adPos} onChange={(e) => setAdPos(e.target.value as any)}>
-                <option value="TOP">{zh ? '🔥 顶部黄金广告位（50 Stars / 7天）' : '🔥 Top Banner Slot (50 Stars / 7d)'}</option>
-                <option value="BOTTOM">{zh ? '📢 底部品牌广告位（30 Stars / 7天）' : '📢 Bottom Banner Slot (30 Stars / 7d)'}</option>
+                <option value="TOP">{zh ? '🔥 顶部黄金广告位（50⭐ / 7天）' : '🔥 Top Banner Slot (50⭐ / 7d)'}</option>
+                <option value="BOTTOM">{zh ? '📢 底部品牌广告位（30⭐ / 7天）' : '📢 Bottom Banner Slot (30⭐ / 7d)'}</option>
               </select>
               <input style={inputStyle} value={adTitleInput} onChange={(e) => setAdTitleInput(e.target.value)} placeholder={zh ? '广告标题（建议 20 字以内）' : 'Ad headline (max 36 chars)'} />
               <input style={inputStyle} value={adUrlInput} onChange={(e) => setAdUrlInput(e.target.value)} placeholder="https://t.me/your_channel" />
@@ -825,7 +825,7 @@ export default function App() {
               )}
             </Section>
 
-            <Section header={zh ? '1️⃣ 邀请裂变排行（入群自动 +20 积分）' : '1️⃣ Referral Leaderboard'}>
+            <Section header={zh ? '邀请裂变排行（入群自动 +20 积分）' : 'Referral Leaderboard'}>
               <div style={{ padding: '8px 16px' }}>
                 {inviteData.myLink ? (
                   <div style={{ fontSize: 12, wordBreak: 'break-all', padding: 8, borderRadius: 8, background: 'rgba(128,128,128,0.1)' }}>{inviteData.myLink.invite_url}</div>
@@ -892,7 +892,7 @@ export default function App() {
               </div>
             </Section>
 
-            <Section header={zh ? '2️⃣ 付费进群 · 3️⃣ 强关频道 · 7️⃣ 白标' : '2️⃣ Paid Join · 3️⃣ Force Sub · 7️⃣ White-Label'}>
+            <Section header={zh ? '付费进群 · 强关频道 · 白标' : 'Paid Join · Force Sub · White-Label'}>
               <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <input style={inputStyle} value={forceChannel} onChange={(e) => setForceChannel(e.target.value)} placeholder={zh ? '强制关注频道（如 @mychannel）' : 'Force channel (@username)'} />
                 <input style={inputStyle} value={customFooter} onChange={(e) => setCustomFooter(e.target.value)} placeholder={zh ? '白标水印尾巴' : 'Custom footer'} />
@@ -901,7 +901,7 @@ export default function App() {
               </div>
             </Section>
 
-            <Section header={zh ? '4️⃣ 多群联动 · 5️⃣ 自动发卡 · 6️⃣ 私聊发 CSV' : '4️⃣ Multi-Group · 5️⃣ Auto-Keys · 6️⃣ CSV'}>
+            <Section header={zh ? '多群联动 · 自动发卡 · 私聊发 CSV' : 'Multi-Group · Auto-Keys · CSV'}>
               <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <input style={{ ...inputStyle, flex: 2 }} value={multiBcText} onChange={(e) => setMultiBcText(e.target.value)} placeholder={zh ? '多群同步群发内容' : 'Multi-group broadcast'} />
