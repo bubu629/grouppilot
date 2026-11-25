@@ -457,6 +457,121 @@ app.get("/api/raffles/:id", async (c) => {
   return c.json({ ok: true, raffle, prizes: prizes.results || [], winners: winners.results || [] });
 });
 
+
+// ==================== 6. 活动详情、群组投票与群运营接口 ====================
+app.get("/api/events/:id", async (c) => {
+  const id = c.req.param("id");
+  const event = await c.env.DB.prepare("SELECT * FROM events WHERE id = ? OR replace(id, \"-\", \"\") = ?").bind(id, id).first();
+  if (!event) return c.json({ ok: false, error: "NOT_FOUND" }, 404);
+  const members = await c.env.DB.prepare(`
+    SELECT m.telegram_id, m.status, m.joined_at, u.first_name
+    FROM event_members m
+    LEFT JOIN users u ON m.telegram_id = u.telegram_id
+    WHERE m.event_id = ? AND m.status != \x27CANCELLED\x27
+    ORDER BY m.joined_at ASC
+  `).bind(event.id).all();
+  return c.json({ ok: true, event, members: members.results || [] });
+});
+
+app.post("/api/polls", async (c) => {
+  const user = c.get("tgUser");
+  const body = await c.req.json();
+  const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, body.groupId, user.id);
+  if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
+
+  const options = (body.options || []).map((s: string) => s.trim()).filter(Boolean);
+  if (options.length < 2) return c.json({ ok: false, error: "NEED_AT_LEAST_2_OPTIONS" }, 400);
+
+  const id = crypto.randomUUID();
+  const now = Date.now();
+  await c.env.DB.prepare(`
+    INSERT INTO polls (id, group_id, creator_id, question, options_json, is_multiple, is_anonymous, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(id, body.groupId, user.id, body.question, JSON.stringify(options), body.isMultiple ? 1 : 0, body.isAnonymous ? 1 : 0, now).run();
+
+  const startParam = "pol_" + id.replace(/-/g, "");
+  const optText = options.map((o: string, i: number) => (i + 1) + ". " + o).join("\n");
+  await tgApi(c.env.TELEGRAM_BOT_TOKEN, "sendMessage", {
+    chat_id: body.groupId,
+    text: "📊 *群组投票：" + body.question + "*\n\n" + optText + "\n\n" + (body.isMultiple ? "（多选" : "（单选") + (body.isAnonymous ? " · 匿名）" : "）") + "\n点击下方按钮参与投票 👇",
+    parse_mode: "Markdown",
+    reply_markup: {
+      inline_keyboard: [[{ text: "📊 立即投票 / 查看结果", url: "https://t.me/" + c.env.BOT_USERNAME + "?startapp=" + startParam }]],
+    },
+  });
+  return c.json({ ok: true, id });
+});
+
+app.get("/api/polls/:id", async (c) => {
+  const id = c.req.param("id");
+  const poll = await c.env.DB.prepare("SELECT * FROM polls WHERE id = ? OR replace(id, \"-\", \"\") = ?").bind(id, id).first<any>();
+  if (!poll) return c.json({ ok: false, error: "NOT_FOUND" }, 404);
+  const votes = await c.env.DB.prepare("SELECT option_index, COUNT(*) as cnt FROM poll_votes WHERE poll_id = ? GROUP BY option_index").bind(poll.id).all<any>();
+  const counts: Record<number, number> = {};
+  for (const v of votes.results || []) counts[v.option_index] = v.cnt;
+  return c.json({ ok: true, poll: { ...poll, options: JSON.parse(poll.options_json || "[]") }, counts });
+});
+
+app.post("/api/polls/:id/vote", async (c) => {
+  const user = c.get("tgUser");
+  const pollId = c.req.param("id");
+  const body = await c.req.json();
+  const poll = await c.env.DB.prepare("SELECT * FROM polls WHERE id = ? OR replace(id, \"-\", \"\") = ?").bind(pollId, pollId).first<any>();
+  if (!poll || poll.status !== "OPEN") return c.json({ ok: false, error: "POLL_CLOSED" }, 400);
+
+  const { isMember } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, poll.group_id, user.id);
+  if (!isMember) return c.json({ ok: false, error: "NOT_GROUP_MEMBER" }, 403);
+
+  const indices: number[] = Array.isArray(body.optionIndices) ? body.optionIndices : [body.optionIndex];
+  if (!indices.length) return c.json({ ok: false, error: "NO_OPTION_SELECTED" }, 400);
+  if (!poll.is_multiple && indices.length > 1) return c.json({ ok: false, error: "SINGLE_CHOICE_ONLY" }, 400);
+
+  const enc = new TextEncoder();
+  const hashBuf = await crypto.subtle.digest("SHA-256", enc.encode(poll.id + ":" + user.id));
+  const voterHash = Array.from(new Uint8Array(hashBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const now = Date.now();
+
+  const stmts: D1PreparedStatement[] = [
+    c.env.DB.prepare("DELETE FROM poll_votes WHERE poll_id = ? AND voter_hash = ?").bind(poll.id, voterHash),
+  ];
+  for (const idx of indices) {
+    stmts.push(
+      c.env.DB.prepare("INSERT INTO poll_votes (id, poll_id, option_index, voter_hash, created_at) VALUES (?, ?, ?, ?, ?)").bind(
+        crypto.randomUUID(), poll.id, idx, voterHash, now
+      )
+    );
+  }
+  await c.env.DB.batch(stmts);
+  return c.json({ ok: true });
+});
+
+app.get("/api/groups/:id/admin", async (c) => {
+  const groupId = Number(c.req.param("id"));
+  const group = await c.env.DB.prepare("SELECT group_id, title, welcome_enabled, welcome_text FROM groups WHERE group_id = ?").bind(groupId).first();
+  if (!group) return c.json({ ok: false, error: "NOT_FOUND" }, 404);
+  const leaderboard = await c.env.DB.prepare(`
+    SELECT p.telegram_id, p.balance, p.total_earned, u.first_name
+    FROM points_accounts p
+    LEFT JOIN users u ON p.telegram_id = u.telegram_id
+    WHERE p.group_id = ?
+    ORDER BY p.balance DESC
+    LIMIT 20
+  `).bind(groupId).all();
+  return c.json({ ok: true, group, leaderboard: leaderboard.results || [] });
+});
+
+app.post("/api/groups/:id/settings", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, groupId, user.id);
+  if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
+
+  const body = await c.req.json();
+  await c.env.DB.prepare("UPDATE groups SET welcome_enabled = ?, welcome_text = ?, updated_at = ? WHERE group_id = ?")
+    .bind(body.welcomeEnabled ? 1 : 0, body.welcomeText || "", Date.now(), groupId).run();
+  return c.json({ ok: true });
+});
+
 // ==================== 4. Webhook & Cron ====================
 app.post('/webhook', async (c) => {
   if (c.req.header('X-Telegram-Bot-Api-Secret-Token') !== c.env.TELEGRAM_WEBHOOK_SECRET) {
