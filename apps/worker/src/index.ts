@@ -419,6 +419,44 @@ app.post('/api/raffles/:id/draw', async (c) => {
   return c.json(await runRaffleDraw(c.env.DB, c.env.TELEGRAM_BOT_TOKEN, raffleId));
 });
 
+
+// ==================== 5. 前端查询接口（群列表、红包详情、抽奖详情） ====================
+app.get("/api/groups", async (c) => {
+  const rows = await c.env.DB.prepare(
+    "SELECT group_id, title, plan FROM groups WHERE bot_active = 1 ORDER BY updated_at DESC LIMIT 50"
+  ).all();
+  return c.json({ ok: true, groups: rows.results || [] });
+});
+
+app.get("/api/red-packets/:id", async (c) => {
+  const id = c.req.param("id");
+  const packet = await c.env.DB.prepare("SELECT * FROM red_packets WHERE id = ? OR replace(id, \"-\", \"\") = ?").bind(id, id).first();
+  if (!packet) return c.json({ ok: false, error: "NOT_FOUND" }, 404);
+  const claims = await c.env.DB.prepare(`
+    SELECT c.telegram_id, c.amount, c.claimed_at, u.first_name
+    FROM red_packet_claims c
+    LEFT JOIN users u ON c.telegram_id = u.telegram_id
+    WHERE c.red_packet_id = ?
+    ORDER BY c.amount DESC
+  `).bind(packet.id).all();
+  return c.json({ ok: true, packet, claims: claims.results || [] });
+});
+
+app.get("/api/raffles/:id", async (c) => {
+  const id = c.req.param("id");
+  const raffle = await c.env.DB.prepare("SELECT * FROM raffles WHERE id = ? OR replace(id, \"-\", \"\") = ?").bind(id, id).first();
+  if (!raffle) return c.json({ ok: false, error: "NOT_FOUND" }, 404);
+  const prizes = await c.env.DB.prepare("SELECT * FROM raffle_prizes WHERE raffle_id = ? ORDER BY rank_order ASC").bind(raffle.id).all();
+  const winners = await c.env.DB.prepare(`
+    SELECT e.telegram_id, e.claim_code, p.prize_name, u.first_name
+    FROM raffle_entries e
+    JOIN raffle_prizes p ON e.prize_id = p.id
+    LEFT JOIN users u ON e.telegram_id = u.telegram_id
+    WHERE e.raffle_id = ? AND e.is_winner = 1
+  `).bind(raffle.id).all();
+  return c.json({ ok: true, raffle, prizes: prizes.results || [], winners: winners.results || [] });
+});
+
 // ==================== 4. Webhook & Cron ====================
 app.post('/webhook', async (c) => {
   if (c.req.header('X-Telegram-Bot-Api-Secret-Token') !== c.env.TELEGRAM_WEBHOOK_SECRET) {

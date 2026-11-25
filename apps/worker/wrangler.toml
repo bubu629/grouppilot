@@ -3,7 +3,7 @@ main = "src/index.ts"
 compatibility_date = "2026-11-01"
 
 [vars]
-BOT_USERNAME = "GroupPilot6bot"
+BOT_USERNAME = "grouppilot6299bot"
 MINIAPP_URL = "https://example.com"
 
 [[d1_databases]]
