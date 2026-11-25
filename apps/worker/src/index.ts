@@ -927,10 +927,10 @@ app.get("/api/ads/active", async (c) => {
   const top = await c.env.DB.prepare(
     "SELECT id, title, target_url, expires_at FROM ad_orders WHERE position = 'TOP' AND status = 'ACTIVE' AND expires_at > ? ORDER BY created_at DESC LIMIT 1"
   ).bind(now).first();
-  const bottom = await c.env.DB.prepare(
-    "SELECT id, title, target_url, expires_at FROM ad_orders WHERE position = 'BOTTOM' AND status = 'ACTIVE' AND expires_at > ? ORDER BY created_at DESC LIMIT 1"
-  ).bind(now).first();
-  return c.json({ ok: true, top: top || null, bottom: bottom || null });
+  const bottomRes = await c.env.DB.prepare(
+    "SELECT id, title, target_url, expires_at FROM ad_orders WHERE position = 'BOTTOM' AND status = 'ACTIVE' AND expires_at > ? ORDER BY created_at DESC LIMIT 10"
+  ).bind(now).all();
+  return c.json({ ok: true, top: top || null, bottoms: bottomRes.results || [] });
 });
 
 app.post("/api/ads/invoice", async (c) => {

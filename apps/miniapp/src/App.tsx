@@ -78,14 +78,14 @@ export default function App() {
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [msg, setMsg] = useState<string>('');
 
-  const [activeAds, setActiveAds] = useState<{ top: any; bottom: any }>({ top: null, bottom: null });
+  const [activeAds, setActiveAds] = useState<{ top: any; bottoms: any[] }>({ top: null, bottoms: [] });
   const [showAdBuy, setShowAdBuy] = useState(false);
   const [adPos, setAdPos] = useState<'TOP' | 'BOTTOM'>('TOP');
   const [adTitleInput, setAdTitleInput] = useState('');
   const [adUrlInput, setAdUrlInput] = useState('https://t.me/');
 
   const refreshAds = () => {
-    apiFetch('/api/ads/active').then((d) => d.ok && setActiveAds({ top: d.top, bottom: d.bottom }));
+    apiFetch('/api/ads/active').then((d) => d.ok && setActiveAds({ top: d.top || null, bottoms: d.bottoms || [] }));
   };
 
   const handleShareApp = () => {
@@ -255,30 +255,66 @@ export default function App() {
   const AdSlot = ({ pos }: { pos: 'TOP' | 'BOTTOM' }) => {
     if (isPro) return null;
     const isTop = pos === 'TOP';
-    const ad = isTop ? activeAds.top : activeAds.bottom;
-    return (
-      <div style={{ padding: '8px 10px', borderRadius: 12, border: '1px dashed rgba(128,128,128,0.35)', background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.72)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-        <div
-          onClick={() => {
-            if (ad?.target_url) window.open(ad.target_url, '_blank');
-            else { setAdPos(pos); setShowAdBuy(true); }
-          }}
-          style={{ flex: 1, cursor: 'pointer', minWidth: 0 }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(128,128,128,0.2)' }}>{zh ? '广告' : 'AD'}</span>
-            <span style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {ad ? ad.title : (isTop ? (zh ? '🔥 顶部赞助位招租 · 50 Stars/7天' : '🔥 Top Ad Slot · 50 Stars/7d') : (zh ? '📢 底部推广位招租 · 30 Stars/7天' : '📢 Bottom Ad Slot · 30 Stars/7d'))}
-            </span>
+
+    // 顶部：独家 1 个黄金位
+    if (isTop) {
+      const ad = activeAds.top;
+      return (
+        <div style={{ padding: '8px 10px', borderRadius: 12, border: '1px dashed rgba(128,128,128,0.35)', background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.72)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+          <div
+            onClick={() => {
+              if (ad?.target_url) window.open(ad.target_url, '_blank');
+              else { setAdPos('TOP'); setShowAdBuy(true); }
+            }}
+            style={{ flex: 1, cursor: 'pointer', minWidth: 0 }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(128,128,128,0.2)' }}>{zh ? '顶置广告' : 'TOP AD'}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {ad ? ad.title : (zh ? '🔥 顶部独家赞助位招租 · 50 Stars/7天' : '🔥 Exclusive Top Slot · 50 Stars/7d')}
+              </span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button onClick={() => { setAdPos('TOP'); setShowAdBuy(true); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(255,152,0,0.16)', color: '#e65100', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+              {zh ? '投放' : 'Buy'}
+            </button>
+            <button onClick={() => { setShowAdBuy(false); setSubView('NONE'); setTab('PRO'); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+              {zh ? '去广告' : 'No Ads'}
+            </button>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          <button onClick={() => { setAdPos(pos); setShowAdBuy(true); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(255,152,0,0.16)', color: '#e65100', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-            {zh ? '投放' : 'Buy'}
-          </button>
-          <button onClick={() => { setShowAdBuy(false); setSubView('NONE'); setTab('PRO'); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-            {zh ? '去广告' : 'No Ads'}
-          </button>
+      );
+    }
+
+    // 尾部：支持多条广告同时展示 + 底部常驻招租入口
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {activeAds.bottoms.map((ad: any) => (
+          <div
+            key={ad.id}
+            onClick={() => window.open(ad.target_url, '_blank')}
+            style={{ padding: '8px 10px', borderRadius: 12, border: '1px solid rgba(128,128,128,0.22)', background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.78)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(128,128,128,0.18)' }}>{zh ? '赞助' : 'AD'}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ad.title}</span>
+            </div>
+            <span style={{ fontSize: 11, opacity: 0.5, whiteSpace: 'nowrap' }}>↗</span>
+          </div>
+        ))}
+        <div style={{ padding: '7px 10px', borderRadius: 12, border: '1px dashed rgba(128,128,128,0.35)', background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.55)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+          <span onClick={() => { setAdPos('BOTTOM'); setShowAdBuy(true); }} style={{ fontSize: 12, opacity: 0.75, cursor: 'pointer' }}>
+            {zh ? '📢 尾部推广位招租（支持多条展示 · 30 Stars/7天）' : '📢 Bottom Ad Slots Open (30 Stars/7d)'}
+          </span>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <button onClick={() => { setAdPos('BOTTOM'); setShowAdBuy(true); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(255,152,0,0.16)', color: '#e65100', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+              {zh ? '投放' : 'Buy'}
+            </button>
+            <button onClick={() => { setShowAdBuy(false); setSubView('NONE'); setTab('PRO'); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+              {zh ? '去广告' : 'No Ads'}
+            </button>
+          </div>
         </div>
       </div>
     );
