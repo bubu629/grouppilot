@@ -9,6 +9,269 @@ declare global {
   }
 }
 
+type Lang = 'zh' | 'en';
+
+const I18N: Record<Lang, Record<string, string>> = {
+  zh: {
+    hello: '你好',
+    subtitle: '活动 · 积分红包 · 幸运抽奖 · 群协作',
+    checking: '检测中...',
+    connected: '已连接云端',
+    abnormal: '异常',
+    connFailed: '连接失败',
+    secEngage: '社群激励与互动',
+    secCollab: '群组协作与商业化',
+    pktTitle: '红包中心',
+    pktSub: '拼手气 / 均分积分红包',
+    pktBadge: '积分版',
+    rflTitle: '幸运抽奖',
+    rflSub: '多等级奖品 · 手动/定时/满人自动开奖',
+    evtTitle: '活动报名',
+    evtSub: '名额上限 · 候补自动递补',
+    polTitle: '群组投票',
+    polSub: '单选 / 多选 / 真匿名投票',
+    admTitle: '群组运营与 Pro 会员',
+    admSub: 'Stars 升级 Pro · 群积分榜 · 入群欢迎语',
+    backHome: '← 返回首页',
+    selectGroup: '选择目标群组（需先拉 Bot 进群设管理员）',
+    noGroup: '暂未检测到已绑定的群组，请先将 Bot 拉进测试群并设为管理员。',
+    needGroup: '请先将 Bot 拉入群组并设为管理员',
+    // Red Packet
+    pktCreateHeader: '发一个群组积分红包',
+    pktPlaceholder: '红包祝福语',
+    pktAmountPh: '总积分',
+    pktUnitPts: '积分',
+    pktCountPh: '份数',
+    pktUnitCnt: '个',
+    pktLucky: '拼手气红包',
+    pktEqual: '普通均分红包',
+    pktSendBtn: '🧧 发送红包到群聊',
+    pktSending: '正在发送红包到群里...',
+    pktSent: '✅ 红包已发送到群里！',
+    pktClaiming: '正在开红包...',
+    pktClaimBtn: '🧧 立即开红包',
+    pktClaimed: '已领取',
+    pktStatus: '状态',
+    pktPool: '总奖池',
+    pktUnitPtsFull: '社区积分',
+    // Raffle
+    rflCreateHeader: '发起群组幸运抽奖（2.0 进阶版）',
+    rflTitlePh: '抽奖标题',
+    rflTriggerLabel: '开奖方式',
+    rflManual: '手动开奖（群主随时开奖）',
+    rflTime: '定时自动开奖（到点自动开奖）',
+    rflPart: '满人自动开奖（达标瞬间开奖）',
+    rflTargetPh: '满多少人自动开奖',
+    rflTargetUnit: '人开奖',
+    rflPrizesLabel: '奖项设置（支持多等级奖品）',
+    rflPrizePh: '奖品名称',
+    rflQuotaUnit: '名',
+    rflAddPrize: '+ 添加一个奖项等级',
+    rflNewPrizeDef: '三等奖：幸运奖',
+    rflSendBtn: '🎰 发布抽奖到群聊',
+    rflSending: '正在发布抽奖到群里...',
+    rflSent: '✅ 抽奖卡片已发送到群里！',
+    rflNeedPrize: '请至少填写 1 个奖品',
+    rflEnterBtn: '🎰 免费点击参与抽奖',
+    rflDrawBtn: '🎲 群主立即开奖',
+    rflEntered: '✅ 参与成功！等待开奖',
+    rflDrawn: '🎉 已开奖！结果已同步到群聊',
+    rflParticipants: '当前参与',
+    rflPersonUnit: '人',
+    rflMode: '开奖方式',
+    rflPrizesPrefix: '奖品：',
+    rflClaimCode: '核销码：',
+    // Event
+    evtCreateHeader: '发布群组活动报名',
+    evtTitlePh: '活动名称',
+    evtLocPh: '活动地点 / 形式',
+    evtMaxPh: '名额上限（0为不限）',
+    evtWaitlist: '满员后开启候补队列（有人取消自动递补）',
+    evtSendBtn: '📅 发布活动到群聊',
+    evtSending: '正在发布活动到群里...',
+    evtSent: '✅ 活动卡片已发送到群里！',
+    evtJoinBtn: '✅ 立即报名',
+    evtCancelBtn: '取消报名',
+    evtJoined: '✅ 报名成功',
+    evtCancelled: '已取消报名，候补将自动递补',
+    evtLocLabel: '地点：',
+    evtLocDef: '群内通知',
+    evtMaxLabel: '名额上限：',
+    evtUnlimited: '不限',
+    evtCurrent: '当前已报：',
+    evtConfirmed: '✅ 已确认',
+    evtWaitlisted: '⏳ 候补中',
+    // Poll
+    polCreateHeader: '发起群组投票',
+    polQPh: '投票问题',
+    polOptPh: '每行输入一个选项',
+    polMulti: '允许多选',
+    polAnon: '匿名投票',
+    polSendBtn: '📊 发布投票到群聊',
+    polSending: '正在发布投票到群里...',
+    polSent: '✅ 投票卡片已发送到群里！',
+    polNeed2: '请至少填写 2 个投票选项（每行一个）',
+    polSingle: '单选',
+    polMultiTag: '多选',
+    polAnonTag: '真匿名投票',
+    polPublicTag: '公开投票',
+    polTapHint: '点击选项后提交投票',
+    polVoteUnit: '票',
+    polVoteBtn: '✅ 提交投票',
+    polNeedSel: '请先选择投票选项',
+    polVoted: '✅ 投票成功！',
+    // Admin & Pro
+    proHeader: '👑 GroupPilot Pro 商业订阅（Telegram Stars）',
+    proPlanLabel: '当前群组套餐',
+    proActiveSub: '当前群组已解锁全部 Pro 高级功能',
+    proFreeSub: '升级 Pro 解锁无限活动、多级抽奖与专属标识',
+    proBuyBtn: '⭐ 100 Stars 升级 Pro（30天）',
+    proTestBtn: '🧪 1 Star 真机支付测试',
+    proCreating: '正在唤起 Telegram Stars 支付...',
+    proPaid: '👑 支付成功！群组已升级为 GroupPilot Pro！',
+    proCancelled: '已取消支付',
+    welcomeHeader: '入群欢迎语设置',
+    welcomeEnable: '开启新成员入群自动欢迎',
+    welcomePh: '支持使用 {name} 代表新成员昵称',
+    saveSettings: '💾 保存群组设置',
+    settingsSaved: '✅ 群组入群欢迎语已保存！',
+    lbHeader: '🏆 群积分排行榜（Top 20）',
+    lbEmpty: '暂无积分记录',
+    lbEmptySub: '群友抢红包或中奖后，积分将自动显示在这里',
+    failed: '失败',
+    tip: '提示',
+  },
+  en: {
+    hello: 'Hi',
+    subtitle: 'Events · Red Packets · Raffles · Group Ops',
+    checking: 'Checking...',
+    connected: 'Cloud Connected',
+    abnormal: 'Error',
+    connFailed: 'Offline',
+    secEngage: 'Community Engagement',
+    secCollab: 'Group Ops & Pro',
+    pktTitle: 'Red Packets',
+    pktSub: 'Lucky / Equal Points Red Packets',
+    pktBadge: 'PTS',
+    rflTitle: 'Lucky Draw',
+    rflSub: 'Multi-tier Prizes · Manual / Timed / Goal Auto-Draw',
+    evtTitle: 'Event RSVP',
+    evtSub: 'Capacity Limit · Auto Waitlist Promotion',
+    polTitle: 'Group Polls',
+    polSub: 'Single / Multiple / True Anonymous Polls',
+    admTitle: 'Group Ops & Pro Plan',
+    admSub: 'Upgrade Pro via Stars · Leaderboard · Welcome Msg',
+    backHome: '← Back to Home',
+    selectGroup: 'Select Target Group (Add Bot as Admin first)',
+    noGroup: 'No group detected. Please add the Bot to your group as an Admin.',
+    needGroup: 'Please add the Bot to a group as Admin first',
+    // Red Packet
+    pktCreateHeader: 'Send a Group Points Red Packet',
+    pktPlaceholder: 'Greeting / Title',
+    pktAmountPh: 'Total Points',
+    pktUnitPts: 'PTS',
+    pktCountPh: 'Count',
+    pktUnitCnt: 'pcs',
+    pktLucky: 'Lucky Draw (Random)',
+    pktEqual: 'Equal Split',
+    pktSendBtn: '🧧 Send Red Packet to Group',
+    pktSending: 'Sending red packet...',
+    pktSent: '✅ Red packet sent to group!',
+    pktClaiming: 'Opening red packet...',
+    pktClaimBtn: '🧧 Open Red Packet',
+    pktClaimed: 'Claimed',
+    pktStatus: 'Status',
+    pktPool: 'Total Pool',
+    pktUnitPtsFull: 'Points',
+    // Raffle
+    rflCreateHeader: 'Create Lucky Draw (v2.0)',
+    rflTitlePh: 'Raffle Title',
+    rflTriggerLabel: 'Draw Trigger',
+    rflManual: 'Manual Draw (Admin draws anytime)',
+    rflTime: 'Scheduled Auto-Draw (By Time)',
+    rflPart: 'Goal Auto-Draw (By Participants)',
+    rflTargetPh: 'Target participants',
+    rflTargetUnit: 'users',
+    rflPrizesLabel: 'Prizes (Multi-tier supported)',
+    rflPrizePh: 'Prize Name',
+    rflQuotaUnit: 'qty',
+    rflAddPrize: '+ Add Prize Tier',
+    rflNewPrizeDef: '3rd Prize: Lucky Reward',
+    rflSendBtn: '🎰 Post Raffle to Group',
+    rflSending: 'Posting raffle...',
+    rflSent: '✅ Raffle card posted to group!',
+    rflNeedPrize: 'Please add at least 1 prize',
+    rflEnterBtn: '🎰 Enter Raffle for Free',
+    rflDrawBtn: '🎲 Draw Winners Now (Admin)',
+    rflEntered: '✅ Entered! Good luck',
+    rflDrawn: '🎉 Winners drawn & posted to group!',
+    rflParticipants: 'Entries',
+    rflPersonUnit: '',
+    rflMode: 'Mode',
+    rflPrizesPrefix: 'Prizes: ',
+    rflClaimCode: 'Claim Code: ',
+    // Event
+    evtCreateHeader: 'Create Group Event RSVP',
+    evtTitlePh: 'Event Title',
+    evtLocPh: 'Location / Venue',
+    evtMaxPh: 'Max Capacity (0 = unlimited)',
+    evtWaitlist: 'Enable auto-waitlist when full',
+    evtSendBtn: '📅 Post Event to Group',
+    evtSending: 'Posting event...',
+    evtSent: '✅ Event card posted to group!',
+    evtJoinBtn: '✅ RSVP Now',
+    evtCancelBtn: 'Cancel RSVP',
+    evtJoined: '✅ RSVP confirmed',
+    evtCancelled: 'Cancelled. Waitlist auto-promoted.',
+    evtLocLabel: 'Location: ',
+    evtLocDef: 'TBA',
+    evtMaxLabel: 'Limit: ',
+    evtUnlimited: 'Unlimited',
+    evtCurrent: 'Registered: ',
+    evtConfirmed: '✅ Confirmed',
+    evtWaitlisted: '⏳ Waitlist',
+    // Poll
+    polCreateHeader: 'Create Group Poll',
+    polQPh: 'Poll Question',
+    polOptPh: 'One option per line',
+    polMulti: 'Multiple Choice',
+    polAnon: 'Anonymous',
+    polSendBtn: '📊 Post Poll to Group',
+    polSending: 'Posting poll...',
+    polSent: '✅ Poll posted to group!',
+    polNeed2: 'Please enter at least 2 options (one per line)',
+    polSingle: 'Single Choice',
+    polMultiTag: 'Multiple Choice',
+    polAnonTag: 'Anonymous',
+    polPublicTag: 'Public',
+    polTapHint: 'Select option(s) and submit',
+    polVoteUnit: 'votes',
+    polVoteBtn: '✅ Submit Vote',
+    polNeedSel: 'Please select an option first',
+    polVoted: '✅ Vote submitted!',
+    // Admin & Pro
+    proHeader: '👑 GroupPilot Pro (Telegram Stars)',
+    proPlanLabel: 'Current Group Plan',
+    proActiveSub: 'All Pro features unlocked for this group',
+    proFreeSub: 'Upgrade to Pro for unlimited events, multi-tier raffles & badge',
+    proBuyBtn: '⭐ Upgrade Pro · 100 Stars (30d)',
+    proTestBtn: '🧪 1 Star Live Payment Test',
+    proCreating: 'Opening Telegram Stars checkout...',
+    proPaid: '👑 Payment successful! Group upgraded to Pro!',
+    proCancelled: 'Payment cancelled',
+    welcomeHeader: 'Welcome Message Settings',
+    welcomeEnable: 'Auto-welcome new members',
+    welcomePh: 'Use {name} for new member name',
+    saveSettings: '💾 Save Settings',
+    settingsSaved: '✅ Group settings saved!',
+    lbHeader: '🏆 Points Leaderboard (Top 20)',
+    lbEmpty: 'No points yet',
+    lbEmptySub: 'Points earned from red packets & raffles appear here',
+    failed: 'Failed',
+    tip: 'Notice',
+  },
+};
+
 async function apiFetch(path: string, options: RequestInit = {}) {
   const initData = window.Telegram?.WebApp?.initData || '';
   const res = await fetch(`${API_BASE}${path}`, {
@@ -54,54 +317,78 @@ const unitInputStyle: React.CSSProperties = {
 };
 
 export default function App() {
+  const [lang, setLang] = useState<Lang>(() => {
+    const saved = localStorage.getItem('gp_lang');
+    if (saved === 'zh' || saved === 'en') return saved;
+    const tgLang = window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code || navigator.language || 'zh';
+    return tgLang.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+  });
+
+  const t = (key: string) => I18N[lang][key] || key;
+
+  const toggleLang = () => {
+    const next: Lang = lang === 'zh' ? 'en' : 'zh';
+    setLang(next);
+    localStorage.setItem('gp_lang', next);
+  };
+
   const [route, setRoute] = useState<'HOME' | 'EVENTS' | 'PACKETS' | 'RAFFLES' | 'POLLS' | 'ADMIN'>('HOME');
   const [targetId, setTargetId] = useState<string | null>(null);
   const [tgUser, setTgUser] = useState<any>(null);
-  const [apiStatus, setApiStatus] = useState<string>('检测中...');
+  const [apiState, setApiState] = useState<'checking' | 'connected' | 'abnormal' | 'connFailed'>('checking');
   const [groups, setGroups] = useState<any[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [msg, setMsg] = useState<string>('');
 
-  // 红包
-  const [pktTitle, setPktTitle] = useState('群友专属福利红包');
+  // Red Packet
+  const [pktTitle, setPktTitle] = useState(lang === 'zh' ? '群友专属福利红包' : 'Community Bonus Red Packet');
   const [pktAmount, setPktAmount] = useState('1000');
   const [pktCount, setPktCount] = useState('10');
   const [pktType, setPktType] = useState<'LUCKY' | 'EQUAL'>('LUCKY');
   const [pktDetail, setPktDetail] = useState<any>(null);
 
-  // 抽奖 2.0（支持定时/满人开奖 + 多等级奖品）
-  const [rflTitle, setRflTitle] = useState('周末幸运大抽奖');
+  // Raffle 2.0
+  const [rflTitle, setRflTitle] = useState(lang === 'zh' ? '周末幸运大抽奖' : 'Weekend Lucky Draw');
   const [rflTrigger, setRflTrigger] = useState<'MANUAL' | 'TIME' | 'PARTICIPANTS'>('MANUAL');
   const [rflDrawAt, setRflDrawAt] = useState(() => {
     const d = new Date(Date.now() + 2 * 3600 * 1000);
     return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   });
   const [rflTargetCount, setRflTargetCount] = useState('20');
-  const [rflPrizes, setRflPrizes] = useState<Array<{ prizeName: string; winnerQuota: string }>>([
-    { prizeName: '一等奖：神秘大奖', winnerQuota: '1' },
-    { prizeName: '二等奖：500 社区积分', winnerQuota: '3' },
-  ]);
+  const [rflPrizes, setRflPrizes] = useState<Array<{ prizeName: string; winnerQuota: string }>>(
+    lang === 'zh'
+      ? [
+          { prizeName: '一等奖：神秘大奖', winnerQuota: '1' },
+          { prizeName: '二等奖：500 社区积分', winnerQuota: '3' },
+        ]
+      : [
+          { prizeName: '1st Prize: Mystery Gift', winnerQuota: '1' },
+          { prizeName: '2nd Prize: 500 Points', winnerQuota: '3' },
+        ]
+  );
   const [rflDetail, setRflDetail] = useState<any>(null);
 
-  // 活动报名
-  const [evtTitle, setEvtTitle] = useState('周末线下聚会 / 线上分享');
-  const [evtLoc, setEvtLoc] = useState('群内语音 / 待定');
+  // Event
+  const [evtTitle, setEvtTitle] = useState(lang === 'zh' ? '周末线下聚会 / 线上分享' : 'Weekend Community Meetup');
+  const [evtLoc, setEvtLoc] = useState(lang === 'zh' ? '群内语音 / 待定' : 'Telegram Voice Chat / TBA');
   const [evtMax, setEvtMax] = useState('20');
   const [evtWaitlist, setEvtWaitlist] = useState(true);
   const [evtDetail, setEvtDetail] = useState<any>(null);
 
-  // 群组投票
-  const [polQuestion, setPolQuestion] = useState('本周活动大家想选哪个时间？');
-  const [polOptionsText, setPolOptionsText] = useState('周五晚上 8 点\n周六下午 3 点\n周日下午 3 点');
+  // Poll
+  const [polQuestion, setPolQuestion] = useState(lang === 'zh' ? '本周活动大家想选哪个时间？' : 'Best time for this week’s event?');
+  const [polOptionsText, setPolOptionsText] = useState(
+    lang === 'zh' ? '周五晚上 8 点\n周六下午 3 点\n周日下午 3 点' : 'Friday 8 PM\nSaturday 3 PM\nSunday 3 PM'
+  );
   const [polMultiple, setPolMultiple] = useState(false);
   const [polAnonymous, setPolAnonymous] = useState(true);
   const [polDetail, setPolDetail] = useState<any>(null);
   const [polSelected, setPolSelected] = useState<number[]>([]);
 
-  // 群组运营与设置 + Pro 订阅
+  // Admin & Pro
   const [adminData, setAdminData] = useState<any>(null);
   const [welcomeEnabled, setWelcomeEnabled] = useState(false);
-  const [welcomeText, setWelcomeText] = useState('欢迎 {name} 加入本群！🎉');
+  const [welcomeText, setWelcomeText] = useState('欢迎 {name} 加入本群！/ Welcome {name}! 🎉');
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
@@ -129,8 +416,8 @@ export default function App() {
 
     fetch(API_BASE)
       .then((r) => r.json())
-      .then((d) => setApiStatus(d.ok ? '已连接云端' : '异常'))
-      .catch(() => setApiStatus('连接失败'));
+      .then((d) => setApiState(d.ok ? 'connected' : 'abnormal'))
+      .catch(() => setApiState('connFailed'));
 
     apiFetch('/api/groups').then((d) => {
       if (d.ok && d.groups?.length) {
@@ -146,7 +433,7 @@ export default function App() {
       if (d.ok) {
         setAdminData(d);
         setWelcomeEnabled(Boolean(d.group?.welcome_enabled));
-        setWelcomeText(d.group?.welcome_text || '欢迎 {name} 加入本群！🎉');
+        setWelcomeText(d.group?.welcome_text || '欢迎 {name} 加入本群！/ Welcome {name}! 🎉');
       }
     });
   };
@@ -161,8 +448,8 @@ export default function App() {
   }, [route, targetId, selectedGroupId]);
 
   const handleCreatePacket = async () => {
-    if (!selectedGroupId) return setMsg('请先将 Bot 拉入群组并设为管理员');
-    setMsg('正在发送红包到群里...');
+    if (!selectedGroupId) return setMsg(t('needGroup'));
+    setMsg(t('pktSending'));
     const res = await apiFetch('/api/red-packets', {
       method: 'POST',
       body: JSON.stringify({
@@ -174,30 +461,30 @@ export default function App() {
       }),
     });
     if (res.ok) {
-      setMsg('✅ 红包已发送到群里！');
+      setMsg(t('pktSent'));
       setTargetId(res.id);
-    } else setMsg(`❌ 发送失败：${res.error}`);
+    } else setMsg(`❌ ${t('failed')}: ${res.error}`);
   };
 
   const handleClaimPacket = async () => {
     if (!pktDetail?.packet?.id) return;
-    setMsg('正在开红包...');
+    setMsg(t('pktClaiming'));
     const res = await apiFetch(`/api/red-packets/${pktDetail.packet.id}/claim`, { method: 'POST' });
     if (res.ok) {
-      setMsg(`🎉 恭喜你抢到了 ${res.amount} 社区积分！`);
+      setMsg(lang === 'zh' ? `🎉 恭喜你抢到了 ${res.amount} 社区积分！` : `🎉 You claimed ${res.amount} Points!`);
       const updated = await apiFetch(`/api/red-packets/${pktDetail.packet.id}`);
       if (updated.ok) setPktDetail(updated);
-    } else setMsg(`提示：${res.error}`);
+    } else setMsg(`${t('tip')}: ${res.error}`);
   };
 
   const handleCreateRaffle = async () => {
-    if (!selectedGroupId) return setMsg('请先将 Bot 拉入群组并设为管理员');
+    if (!selectedGroupId) return setMsg(t('needGroup'));
     const validPrizes = rflPrizes
       .filter((p) => p.prizeName.trim())
       .map((p) => ({ prizeName: p.prizeName.trim(), prizeType: 'CUSTOM', winnerQuota: Math.max(1, Number(p.winnerQuota) || 1) }));
-    if (!validPrizes.length) return setMsg('请至少填写 1 个奖品');
+    if (!validPrizes.length) return setMsg(t('rflNeedPrize'));
 
-    setMsg('正在发布抽奖到群里...');
+    setMsg(t('rflSending'));
     const res = await apiFetch('/api/raffles', {
       method: 'POST',
       body: JSON.stringify({
@@ -210,15 +497,15 @@ export default function App() {
       }),
     });
     if (res.ok) {
-      setMsg('✅ 抽奖卡片已发送到群里！');
+      setMsg(t('rflSent'));
       setTargetId(res.id);
-    } else setMsg(`❌ 发布失败：${res.error}`);
+    } else setMsg(`❌ ${t('failed')}: ${res.error}`);
   };
 
   const handleEnterRaffle = async () => {
     if (!rflDetail?.raffle?.id) return;
     const res = await apiFetch(`/api/raffles/${rflDetail.raffle.id}/enter`, { method: 'POST' });
-    setMsg(res.ok ? '✅ 参与成功！等待开奖' : `提示：${res.error}`);
+    setMsg(res.ok ? t('rflEntered') : `${t('tip')}: ${res.error}`);
     const updated = await apiFetch(`/api/raffles/${rflDetail.raffle.id}`);
     if (updated.ok) setRflDetail(updated);
   };
@@ -226,14 +513,14 @@ export default function App() {
   const handleDrawRaffle = async () => {
     if (!rflDetail?.raffle?.id) return;
     const res = await apiFetch(`/api/raffles/${rflDetail.raffle.id}/draw`, { method: 'POST' });
-    setMsg(res.ok ? '🎉 已开奖！结果已同步到群聊' : `提示：${res.error}`);
+    setMsg(res.ok ? t('rflDrawn') : `${t('tip')}: ${res.error}`);
     const updated = await apiFetch(`/api/raffles/${rflDetail.raffle.id}`);
     if (updated.ok) setRflDetail(updated);
   };
 
   const handleCreateEvent = async () => {
-    if (!selectedGroupId) return setMsg('请先将 Bot 拉入群组并设为管理员');
-    setMsg('正在发布活动到群里...');
+    if (!selectedGroupId) return setMsg(t('needGroup'));
+    setMsg(t('evtSending'));
     const now = Date.now();
     const res = await apiFetch('/api/events', {
       method: 'POST',
@@ -248,24 +535,24 @@ export default function App() {
       }),
     });
     if (res.ok) {
-      setMsg('✅ 活动卡片已发送到群里！');
+      setMsg(t('evtSent'));
       setTargetId(res.id);
-    } else setMsg(`❌ 发布失败：${res.error}`);
+    } else setMsg(`❌ ${t('failed')}: ${res.error}`);
   };
 
   const handleEventAction = async (action: 'join' | 'cancel') => {
     if (!evtDetail?.event?.id) return;
     const res = await apiFetch(`/api/events/${evtDetail.event.id}/${action}`, { method: 'POST' });
-    setMsg(res.ok ? (action === 'join' ? `✅ 报名成功（状态：${res.status}）` : '已取消报名，候补将自动递补') : `提示：${res.error}`);
+    setMsg(res.ok ? (action === 'join' ? `${t('evtJoined')} (${res.status})` : t('evtCancelled')) : `${t('tip')}: ${res.error}`);
     const updated = await apiFetch(`/api/events/${evtDetail.event.id}`);
     if (updated.ok) setEvtDetail(updated);
   };
 
   const handleCreatePoll = async () => {
-    if (!selectedGroupId) return setMsg('请先将 Bot 拉入群组并设为管理员');
+    if (!selectedGroupId) return setMsg(t('needGroup'));
     const options = polOptionsText.split('\n').map((s) => s.trim()).filter(Boolean);
-    if (options.length < 2) return setMsg('请至少填写 2 个投票选项（每行一个）');
-    setMsg('正在发布投票到群里...');
+    if (options.length < 2) return setMsg(t('polNeed2'));
+    setMsg(t('polSending'));
     const res = await apiFetch('/api/polls', {
       method: 'POST',
       body: JSON.stringify({
@@ -277,23 +564,23 @@ export default function App() {
       }),
     });
     if (res.ok) {
-      setMsg('✅ 投票卡片已发送到群里！');
+      setMsg(t('polSent'));
       setPolSelected([]);
       setTargetId(res.id);
-    } else setMsg(`❌ 发布失败：${res.error}`);
+    } else setMsg(`❌ ${t('failed')}: ${res.error}`);
   };
 
   const handleVotePoll = async () => {
-    if (!polDetail?.poll?.id || !polSelected.length) return setMsg('请先选择投票选项');
+    if (!polDetail?.poll?.id || !polSelected.length) return setMsg(t('polNeedSel'));
     const res = await apiFetch(`/api/polls/${polDetail.poll.id}/vote`, {
       method: 'POST',
       body: JSON.stringify({ optionIndices: polSelected }),
     });
     if (res.ok) {
-      setMsg('✅ 投票成功！');
+      setMsg(t('polVoted'));
       const updated = await apiFetch(`/api/polls/${polDetail.poll.id}`);
       if (updated.ok) setPolDetail(updated);
-    } else setMsg(`提示：${res.error}`);
+    } else setMsg(`${t('tip')}: ${res.error}`);
   };
 
   const handleSaveSettings = async () => {
@@ -302,28 +589,28 @@ export default function App() {
       method: 'POST',
       body: JSON.stringify({ welcomeEnabled, welcomeText }),
     });
-    setMsg(res.ok ? '✅ 群组入群欢迎语已保存！' : `❌ 保存失败：${res.error}`);
+    setMsg(res.ok ? t('settingsSaved') : `❌ ${t('failed')}: ${res.error}`);
   };
 
   const handleUpgradePro = async (mode: 'NORMAL' | 'TEST') => {
-    if (!selectedGroupId) return setMsg('请先选择群组');
-    setMsg('正在唤起 Telegram Stars 支付...');
+    if (!selectedGroupId) return setMsg(t('needGroup'));
+    setMsg(t('proCreating'));
     const res = await apiFetch('/api/payments/pro-invoice', {
       method: 'POST',
       body: JSON.stringify({ groupId: Number(selectedGroupId), mode }),
     });
-    if (!res.ok || !res.invoiceUrl) return setMsg(`❌ 订单创建失败：${res.error}`);
+    if (!res.ok || !res.invoiceUrl) return setMsg(`❌ ${t('failed')}: ${res.error}`);
 
     const tg = window.Telegram?.WebApp;
     if (tg?.openInvoice) {
       tg.openInvoice(res.invoiceUrl, (status: string) => {
         if (status === 'paid') {
-          setMsg('👑 支付成功！群组已升级为 GroupPilot Pro！');
+          setMsg(t('proPaid'));
           setTimeout(() => refreshAdmin(selectedGroupId), 1500);
         } else if (status === 'cancelled') {
-          setMsg('已取消支付');
+          setMsg(t('proCancelled'));
         } else {
-          setMsg(`支付状态：${status}`);
+          setMsg(`${t('tip')}: ${status}`);
         }
       });
     } else {
@@ -333,7 +620,7 @@ export default function App() {
 
   const GroupSelector = () => (
     <div style={{ padding: '8px 16px' }}>
-      <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 6 }}>选择目标群组（需先拉 Bot 进群设管理员）</div>
+      <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 6 }}>{t('selectGroup')}</div>
       {groups.length > 0 ? (
         <select style={inputStyle} value={selectedGroupId} onChange={(e) => setSelectedGroupId(e.target.value)}>
           {groups.map((g) => (
@@ -341,7 +628,7 @@ export default function App() {
           ))}
         </select>
       ) : (
-        <div style={{ fontSize: 13, color: '#e53935' }}>暂未检测到已绑定的群组，请先将 Bot 拉进测试群并设为管理员。</div>
+        <div style={{ fontSize: 13, color: '#e53935' }}>{t('noGroup')}</div>
       )}
     </div>
   );
@@ -349,9 +636,26 @@ export default function App() {
   return (
     <AppRoot>
       <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            onClick={toggleLang}
+            style={{
+              padding: '4px 10px',
+              borderRadius: 999,
+              border: '1px solid rgba(128,128,128,0.35)',
+              background: 'transparent',
+              color: 'inherit',
+              fontSize: 12,
+              cursor: 'pointer',
+            }}
+          >
+            🌐 {lang === 'zh' ? 'English' : '中文'}
+          </button>
+        </div>
+
         <Banner
-          header={`GroupPilot${tgUser ? ` · 你好，${tgUser.first_name}` : ''}`}
-          subheader={`活动 · 积分红包 · 幸运抽奖 · 群协作 (${apiStatus})`}
+          header={`GroupPilot${tgUser ? ` · ${t('hello')}, ${tgUser.first_name}` : ''}`}
+          subheader={`${t('subtitle')} (${t(apiState)})`}
         />
 
         {msg && (
@@ -362,39 +666,39 @@ export default function App() {
 
         {route === 'HOME' && (
           <>
-            <Section header="社群激励与互动">
+            <Section header={t('secEngage')}>
               <Cell
                 before={<span style={{ fontSize: 24 }}>🧧</span>}
-                after={<Badge type="number">积分版</Badge>}
-                subtitle="拼手气 / 均分积分红包"
+                after={<Badge type="number">{t('pktBadge')}</Badge>}
+                subtitle={t('pktSub')}
                 onClick={() => { setTargetId(null); setRoute('PACKETS'); }}
               >
-                红包中心
+                {t('pktTitle')}
               </Cell>
               <Cell
                 before={<span style={{ fontSize: 24 }}>🎰</span>}
                 after={<Badge type="number">2.0</Badge>}
-                subtitle="多等级奖品 · 手动/定时/满人自动开奖"
+                subtitle={t('rflSub')}
                 onClick={() => { setTargetId(null); setRoute('RAFFLES'); }}
               >
-                幸运抽奖
+                {t('rflTitle')}
               </Cell>
             </Section>
 
-            <Section header="群组协作与商业化">
-              <Cell before={<span style={{ fontSize: 24 }}>📅</span>} subtitle="名额上限 · 候补自动递补" onClick={() => { setTargetId(null); setRoute('EVENTS'); }}>
-                活动报名
+            <Section header={t('secCollab')}>
+              <Cell before={<span style={{ fontSize: 24 }}>📅</span>} subtitle={t('evtSub')} onClick={() => { setTargetId(null); setRoute('EVENTS'); }}>
+                {t('evtTitle')}
               </Cell>
-              <Cell before={<span style={{ fontSize: 24 }}>📊</span>} subtitle="单选 / 多选 / 真匿名投票" onClick={() => { setTargetId(null); setRoute('POLLS'); }}>
-                群组投票
+              <Cell before={<span style={{ fontSize: 24 }}>📊</span>} subtitle={t('polSub')} onClick={() => { setTargetId(null); setRoute('POLLS'); }}>
+                {t('polTitle')}
               </Cell>
               <Cell
                 before={<span style={{ fontSize: 24 }}>👑</span>}
                 after={<Badge type="dot" />}
-                subtitle="Stars 升级 Pro · 群积分榜 · 入群欢迎语"
+                subtitle={t('admSub')}
                 onClick={() => { setTargetId(null); setRoute('ADMIN'); }}
               >
-                群组运营与 Pro 会员
+                {t('admTitle')}
               </Cell>
             </Section>
           </>
@@ -402,43 +706,43 @@ export default function App() {
 
         {route !== 'HOME' && (
           <Button size="s" mode="bezeled" onClick={() => { setTargetId(null); setPktDetail(null); setRflDetail(null); setEvtDetail(null); setPolDetail(null); setRoute('HOME'); }}>
-            ← 返回首页
+            {t('backHome')}
           </Button>
         )}
 
-        {/* ==================== 红包中心 ==================== */}
+        {/* ==================== Red Packets ==================== */}
         {route === 'PACKETS' && !targetId && (
-          <Section header="发一个群组积分红包">
+          <Section header={t('pktCreateHeader')}>
             <GroupSelector />
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <input style={inputStyle} value={pktTitle} onChange={(e) => setPktTitle(e.target.value)} placeholder="红包祝福语" />
+              <input style={inputStyle} value={pktTitle} onChange={(e) => setPktTitle(e.target.value)} placeholder={t('pktPlaceholder')} />
               <div style={{ display: 'flex', gap: 8 }}>
                 <div style={unitBoxStyle}>
-                  <input style={unitInputStyle} type="number" value={pktAmount} onChange={(e) => setPktAmount(e.target.value)} placeholder="总积分" />
-                  <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: 'nowrap' }}>积分</span>
+                  <input style={unitInputStyle} type="number" value={pktAmount} onChange={(e) => setPktAmount(e.target.value)} placeholder={t('pktAmountPh')} />
+                  <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: 'nowrap' }}>{t('pktUnitPts')}</span>
                 </div>
                 <div style={unitBoxStyle}>
-                  <input style={unitInputStyle} type="number" value={pktCount} onChange={(e) => setPktCount(e.target.value)} placeholder="份数" />
-                  <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: 'nowrap' }}>个</span>
+                  <input style={unitInputStyle} type="number" value={pktCount} onChange={(e) => setPktCount(e.target.value)} placeholder={t('pktCountPh')} />
+                  <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: 'nowrap' }}>{t('pktUnitCnt')}</span>
                 </div>
               </div>
               <select style={inputStyle} value={pktType} onChange={(e) => setPktType(e.target.value as any)}>
-                <option value="LUCKY">拼手气红包</option>
-                <option value="EQUAL">普通均分红包</option>
+                <option value="LUCKY">{t('pktLucky')}</option>
+                <option value="EQUAL">{t('pktEqual')}</option>
               </select>
-              <Button stretched onClick={handleCreatePacket}>🧧 发送红包到群聊</Button>
+              <Button stretched onClick={handleCreatePacket}>{t('pktSendBtn')}</Button>
             </div>
           </Section>
         )}
 
         {route === 'PACKETS' && targetId && pktDetail && (
           <Section header={`🧧 ${pktDetail.packet.title}`}>
-            <Cell subtitle={`已领取 ${pktDetail.packet.claimed_count} / ${pktDetail.packet.total_count} 份 · 状态：${pktDetail.packet.status}`}>
-              总奖池：{pktDetail.packet.total_amount} 社区积分
+            <Cell subtitle={`${t('pktClaimed')} ${pktDetail.packet.claimed_count} / ${pktDetail.packet.total_count} · ${t('pktStatus')}: ${pktDetail.packet.status}`}>
+              {t('pktPool')}: {pktDetail.packet.total_amount} {t('pktUnitPtsFull')}
             </Cell>
             {pktDetail.packet.status === 'ACTIVE' && (
               <div style={{ padding: '8px 16px' }}>
-                <Button stretched onClick={handleClaimPacket}>🧧 立即开红包</Button>
+                <Button stretched onClick={handleClaimPacket}>{t('pktClaimBtn')}</Button>
               </div>
             )}
             {pktDetail.claims.map((c: any, i: number) => (
@@ -449,18 +753,18 @@ export default function App() {
           </Section>
         )}
 
-        {/* ==================== 幸运抽奖 2.0 ==================== */}
+        {/* ==================== Lucky Draw 2.0 ==================== */}
         {route === 'RAFFLES' && !targetId && (
-          <Section header="发起群组幸运抽奖（2.0 进阶版）">
+          <Section header={t('rflCreateHeader')}>
             <GroupSelector />
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <input style={inputStyle} value={rflTitle} onChange={(e) => setRflTitle(e.target.value)} placeholder="抽奖标题" />
+              <input style={inputStyle} value={rflTitle} onChange={(e) => setRflTitle(e.target.value)} placeholder={t('rflTitlePh')} />
 
-              <div style={{ fontSize: 13, opacity: 0.7 }}>开奖方式</div>
+              <div style={{ fontSize: 13, opacity: 0.7 }}>{t('rflTriggerLabel')}</div>
               <select style={inputStyle} value={rflTrigger} onChange={(e) => setRflTrigger(e.target.value as any)}>
-                <option value="MANUAL">手动开奖（群主随时开奖）</option>
-                <option value="TIME">定时自动开奖（到点自动开奖）</option>
-                <option value="PARTICIPANTS">满人自动开奖（达标瞬间开奖）</option>
+                <option value="MANUAL">{t('rflManual')}</option>
+                <option value="TIME">{t('rflTime')}</option>
+                <option value="PARTICIPANTS">{t('rflPart')}</option>
               </select>
 
               {rflTrigger === 'TIME' && (
@@ -469,12 +773,12 @@ export default function App() {
 
               {rflTrigger === 'PARTICIPANTS' && (
                 <div style={unitBoxStyle}>
-                  <input style={unitInputStyle} type="number" value={rflTargetCount} onChange={(e) => setRflTargetCount(e.target.value)} placeholder="满多少人自动开奖" />
-                  <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: 'nowrap' }}>人开奖</span>
+                  <input style={unitInputStyle} type="number" value={rflTargetCount} onChange={(e) => setRflTargetCount(e.target.value)} placeholder={t('rflTargetPh')} />
+                  <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: 'nowrap' }}>{t('rflTargetUnit')}</span>
                 </div>
               )}
 
-              <div style={{ fontSize: 13, opacity: 0.7, marginTop: 4 }}>奖项设置（支持多等级奖品）</div>
+              <div style={{ fontSize: 13, opacity: 0.7, marginTop: 4 }}>{t('rflPrizesLabel')}</div>
               {rflPrizes.map((p, idx) => (
                 <div key={idx} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                   <input
@@ -485,7 +789,7 @@ export default function App() {
                       next[idx].prizeName = e.target.value;
                       setRflPrizes(next);
                     }}
-                    placeholder={`奖品 ${idx + 1} 名称`}
+                    placeholder={t('rflPrizePh')}
                   />
                   <div style={{ ...unitBoxStyle, flex: 1 }}>
                     <input
@@ -498,7 +802,7 @@ export default function App() {
                         setRflPrizes(next);
                       }}
                     />
-                    <span style={{ fontSize: 13, opacity: 0.65, marginLeft: 4 }}>名</span>
+                    <span style={{ fontSize: 13, opacity: 0.65, marginLeft: 4 }}>{t('rflQuotaUnit')}</span>
                   </div>
                   {rflPrizes.length > 1 && (
                     <button
@@ -514,103 +818,103 @@ export default function App() {
               <Button
                 size="s"
                 mode="bezeled"
-                onClick={() => setRflPrizes([...rflPrizes, { prizeName: `三等奖：幸运奖`, winnerQuota: '5' }])}
+                onClick={() => setRflPrizes([...rflPrizes, { prizeName: t('rflNewPrizeDef'), winnerQuota: '5' }])}
               >
-                + 添加一个奖项等级
+                {t('rflAddPrize')}
               </Button>
 
-              <Button stretched onClick={handleCreateRaffle}>🎰 发布抽奖到群聊</Button>
+              <Button stretched onClick={handleCreateRaffle}>{t('rflSendBtn')}</Button>
             </div>
           </Section>
         )}
 
         {route === 'RAFFLES' && targetId && rflDetail && (
           <Section header={`🎰 ${rflDetail.raffle.title}`}>
-            <Cell subtitle={`当前参与：${rflDetail.raffle.participant_count} 人 · 开奖方式：${rflDetail.raffle.trigger_type} · 状态：${rflDetail.raffle.status}`}>
-              奖品：{rflDetail.prizes.map((p: any) => `${p.prize_name}×${p.winner_quota}`).join(' / ')}
+            <Cell subtitle={`${t('rflParticipants')}: ${rflDetail.raffle.participant_count} ${t('rflPersonUnit')} · ${t('rflMode')}: ${rflDetail.raffle.trigger_type} · ${rflDetail.raffle.status}`}>
+              {t('rflPrizesPrefix')}{rflDetail.prizes.map((p: any) => `${p.prize_name}×${p.winner_quota}`).join(' / ')}
             </Cell>
             {rflDetail.raffle.status === 'OPEN' && (
               <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <Button stretched onClick={handleEnterRaffle}>🎰 免费点击参与抽奖</Button>
-                <Button stretched mode="outline" onClick={handleDrawRaffle}>🎲 群主立即开奖</Button>
+                <Button stretched onClick={handleEnterRaffle}>{t('rflEnterBtn')}</Button>
+                <Button stretched mode="outline" onClick={handleDrawRaffle}>{t('rflDrawBtn')}</Button>
               </div>
             )}
             {rflDetail.winners.map((w: any, i: number) => (
-              <Cell key={i} subtitle={`核销码：${w.claim_code}`} after={w.prize_name}>
+              <Cell key={i} subtitle={`${t('rflClaimCode')}${w.claim_code}`} after={w.prize_name}>
                 🏆 {w.first_name || w.telegram_id}
               </Cell>
             ))}
           </Section>
         )}
 
-        {/* ==================== 活动报名 ==================== */}
+        {/* ==================== Events ==================== */}
         {route === 'EVENTS' && !targetId && (
-          <Section header="发布群组活动报名">
+          <Section header={t('evtCreateHeader')}>
             <GroupSelector />
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <input style={inputStyle} value={evtTitle} onChange={(e) => setEvtTitle(e.target.value)} placeholder="活动名称" />
-              <input style={inputStyle} value={evtLoc} onChange={(e) => setEvtLoc(e.target.value)} placeholder="活动地点 / 形式" />
+              <input style={inputStyle} value={evtTitle} onChange={(e) => setEvtTitle(e.target.value)} placeholder={t('evtTitlePh')} />
+              <input style={inputStyle} value={evtLoc} onChange={(e) => setEvtLoc(e.target.value)} placeholder={t('evtLocPh')} />
               <div style={unitBoxStyle}>
-                <input style={unitInputStyle} type="number" value={evtMax} onChange={(e) => setEvtMax(e.target.value)} placeholder="名额上限（0为不限）" />
-                <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: 'nowrap' }}>人</span>
+                <input style={unitInputStyle} type="number" value={evtMax} onChange={(e) => setEvtMax(e.target.value)} placeholder={t('evtMaxPh')} />
+                <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: 'nowrap' }}>{t('rflPersonUnit') || 'pax'}</span>
               </div>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
                 <input type="checkbox" checked={evtWaitlist} onChange={(e) => setEvtWaitlist(e.target.checked)} />
-                满员后开启候补队列（有人取消自动递补）
+                {t('evtWaitlist')}
               </label>
-              <Button stretched onClick={handleCreateEvent}>📅 发布活动到群聊</Button>
+              <Button stretched onClick={handleCreateEvent}>{t('evtSendBtn')}</Button>
             </div>
           </Section>
         )}
 
         {route === 'EVENTS' && targetId && evtDetail && (
           <Section header={`📅 ${evtDetail.event.title}`}>
-            <Cell subtitle={`地点：${evtDetail.event.location || '群内通知'} · 名额上限：${evtDetail.event.max_participants || '不限'}`}>
-              当前已报：{evtDetail.members.length} 人
+            <Cell subtitle={`${t('evtLocLabel')}${evtDetail.event.location || t('evtLocDef')} · ${t('evtMaxLabel')}${evtDetail.event.max_participants || t('evtUnlimited')}`}>
+              {t('evtCurrent')}{evtDetail.members.length} {t('rflPersonUnit')}
             </Cell>
             <div style={{ padding: '8px 16px', display: 'flex', gap: 8 }}>
-              <Button stretched onClick={() => handleEventAction('join')}>✅ 立即报名</Button>
-              <Button stretched mode="outline" onClick={() => handleEventAction('cancel')}>取消报名</Button>
+              <Button stretched onClick={() => handleEventAction('join')}>{t('evtJoinBtn')}</Button>
+              <Button stretched mode="outline" onClick={() => handleEventAction('cancel')}>{t('evtCancelBtn')}</Button>
             </div>
             {evtDetail.members.map((m: any, i: number) => (
-              <Cell key={i} after={m.status === 'CONFIRMED' ? '✅ 已确认' : '⏳ 候补中'}>
+              <Cell key={i} after={m.status === 'CONFIRMED' ? t('evtConfirmed') : t('evtWaitlisted')}>
                 {i + 1}. {m.first_name || m.telegram_id}
               </Cell>
             ))}
           </Section>
         )}
 
-        {/* ==================== 群组投票 ==================== */}
+        {/* ==================== Polls ==================== */}
         {route === 'POLLS' && !targetId && (
-          <Section header="发起群组投票">
+          <Section header={t('polCreateHeader')}>
             <GroupSelector />
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <input style={inputStyle} value={polQuestion} onChange={(e) => setPolQuestion(e.target.value)} placeholder="投票问题" />
+              <input style={inputStyle} value={polQuestion} onChange={(e) => setPolQuestion(e.target.value)} placeholder={t('polQPh')} />
               <textarea
                 style={{ ...inputStyle, minHeight: 90, resize: 'vertical' }}
                 value={polOptionsText}
                 onChange={(e) => setPolOptionsText(e.target.value)}
-                placeholder="每行输入一个选项"
+                placeholder={t('polOptPh')}
               />
               <div style={{ display: 'flex', gap: 16, fontSize: 14 }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <input type="checkbox" checked={polMultiple} onChange={(e) => setPolMultiple(e.target.checked)} />
-                  允许多选
+                  {t('polMulti')}
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <input type="checkbox" checked={polAnonymous} onChange={(e) => setPolAnonymous(e.target.checked)} />
-                  匿名投票
+                  {t('polAnon')}
                 </label>
               </div>
-              <Button stretched onClick={handleCreatePoll}>📊 发布投票到群聊</Button>
+              <Button stretched onClick={handleCreatePoll}>{t('polSendBtn')}</Button>
             </div>
           </Section>
         )}
 
         {route === 'POLLS' && targetId && polDetail && (
           <Section header={`📊 ${polDetail.poll.question}`}>
-            <Cell subtitle={`${polDetail.poll.is_multiple ? '多选' : '单选'} · ${polDetail.poll.is_anonymous ? '真匿名投票' : '公开投票'}`}>
-              点击选项后提交投票
+            <Cell subtitle={`${polDetail.poll.is_multiple ? t('polMultiTag') : t('polSingle')} · ${polDetail.poll.is_anonymous ? t('polAnonTag') : t('polPublicTag')}`}>
+              {t('polTapHint')}
             </Cell>
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
               {(polDetail.poll.options || []).map((opt: string, idx: number) => {
@@ -636,59 +940,59 @@ export default function App() {
                     }}
                   >
                     <span>{checked ? '☑️ ' : '⬜️ '}{opt}</span>
-                    <span style={{ opacity: 0.7 }}>{count} 票</span>
+                    <span style={{ opacity: 0.7 }}>{count} {t('polVoteUnit')}</span>
                   </div>
                 );
               })}
-              <Button stretched onClick={handleVotePoll}>✅ 提交投票</Button>
+              <Button stretched onClick={handleVotePoll}>{t('polVoteBtn')}</Button>
             </div>
           </Section>
         )}
 
-        {/* ==================== 群组运营与 Pro 会员 ==================== */}
+        {/* ==================== Group Ops & Pro ==================== */}
         {route === 'ADMIN' && (
           <>
-            <Section header="👑 GroupPilot Pro 商业订阅（Telegram Stars）">
+            <Section header={t('proHeader')}>
               <GroupSelector />
               <Cell
                 after={<Badge type="number">{adminData?.group?.plan === 'PRO' ? 'PRO 👑' : 'FREE'}</Badge>}
-                subtitle={adminData?.group?.plan === 'PRO' ? '当前群组已解锁全部 Pro 高级功能' : '升级 Pro 解锁无限活动、多级抽奖与专属标识'}
+                subtitle={adminData?.group?.plan === 'PRO' ? t('proActiveSub') : t('proFreeSub')}
               >
-                当前群组套餐
+                {t('proPlanLabel')}
               </Cell>
               {adminData?.group?.plan !== 'PRO' && (
                 <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Button stretched onClick={() => handleUpgradePro('NORMAL')}>⭐ 100 Stars 升级 Pro（30天）</Button>
-                  <Button stretched mode="bezeled" onClick={() => handleUpgradePro('TEST')}>🧪 1 Star 真机支付测试</Button>
+                  <Button stretched onClick={() => handleUpgradePro('NORMAL')}>{t('proBuyBtn')}</Button>
+                  <Button stretched mode="bezeled" onClick={() => handleUpgradePro('TEST')}>{t('proTestBtn')}</Button>
                 </div>
               )}
             </Section>
 
-            <Section header="入群欢迎语设置">
+            <Section header={t('welcomeHeader')}>
               <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
                   <input type="checkbox" checked={welcomeEnabled} onChange={(e) => setWelcomeEnabled(e.target.checked)} />
-                  开启新成员入群自动欢迎
+                  {t('welcomeEnable')}
                 </label>
                 <textarea
                   style={{ ...inputStyle, minHeight: 75 }}
                   value={welcomeText}
                   onChange={(e) => setWelcomeText(e.target.value)}
-                  placeholder="支持使用 {name} 代表新成员昵称"
+                  placeholder={t('welcomePh')}
                 />
-                <Button stretched onClick={handleSaveSettings}>💾 保存群组设置</Button>
+                <Button stretched onClick={handleSaveSettings}>{t('saveSettings')}</Button>
               </div>
             </Section>
 
-            <Section header="🏆 群积分排行榜（Top 20）">
+            <Section header={t('lbHeader')}>
               {adminData?.leaderboard?.length > 0 ? (
                 adminData.leaderboard.map((u: any, i: number) => (
-                  <Cell key={i} after={`${u.balance} 积分`}>
+                  <Cell key={i} after={`${u.balance} ${t('pktUnitPts')}`}>
                     {i + 1}. {u.first_name || u.telegram_id}
                   </Cell>
                 ))
               ) : (
-                <Cell subtitle="群友抢红包或中奖后，积分将自动显示在这里">暂无积分记录</Cell>
+                <Cell subtitle={t('lbEmptySub')}>{t('lbEmpty')}</Cell>
               )}
             </Section>
           </>
