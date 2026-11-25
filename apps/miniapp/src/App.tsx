@@ -618,6 +618,68 @@ export default function App() {
     }
   };
 
+  
+  const currentGroup = groups.find((g) => String(g.group_id) === selectedGroupId);
+  const isPro = currentGroup?.plan === "PRO" || adminData?.group?.plan === "PRO";
+
+  const AdSlot = ({ pos }: { pos: "TOP" | "BOTTOM" }) => {
+    if (isPro) return null;
+    const isTop = pos === "TOP";
+    const title = isTop
+      ? (lang === "zh" ? "🔥 顶部赞助广告位招租" : "🔥 Top Sponsor Slot Available")
+      : (lang === "zh" ? "📢 底部品牌推广位 · 触达精准群友" : "📢 Bottom Ad Slot · Reach Active Members");
+    const sub = isTop
+      ? (lang === "zh" ? "点击联系商务投放 / 升级 Pro 免广告" : "Tap to advertise or upgrade to Pro")
+      : (lang === "zh" ? "支持图文跳转频道、Bot 或官网" : "Direct link to your Channel, Bot or Website");
+    const targetUrl = "https://t.me/grouppilot6299bot";
+
+    return (
+      <div
+        style={{
+          padding: "10px 12px",
+          borderRadius: 12,
+          border: "1px dashed rgba(128,128,128,0.4)",
+          background: "rgba(128,128,128,0.06)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 8,
+        }}
+      >
+        <div
+          onClick={() => window.open(targetUrl, "_blank")}
+          style={{ flex: 1, cursor: "pointer", minWidth: 0 }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 10, padding: "1px 5px", borderRadius: 4, background: "rgba(128,128,128,0.2)", opacity: 0.8 }}>
+              {lang === "zh" ? "广告" : "AD"}
+            </span>
+            <span style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {title}
+            </span>
+          </div>
+          <div style={{ fontSize: 12, opacity: 0.65, marginTop: 2 }}>{sub}</div>
+        </div>
+        <button
+          onClick={() => { setTargetId(null); setRoute("ADMIN"); }}
+          style={{
+            padding: "4px 8px",
+            borderRadius: 8,
+            border: "none",
+            background: "rgba(36,129,204,0.15)",
+            color: "#2481cc",
+            fontSize: 11,
+            fontWeight: 600,
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {lang === "zh" ? "去广告" : "No Ads"}
+        </button>
+      </div>
+    );
+  };
+
   const GroupSelector = () => (
     <div style={{ padding: '8px 16px' }}>
       <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 6 }}>{t('selectGroup')}</div>
@@ -652,6 +714,8 @@ export default function App() {
             🌐 {lang === 'zh' ? 'English' : '中文'}
           </button>
         </div>
+
+        <AdSlot pos="TOP" />
 
         <Banner
           header={`GroupPilot${tgUser ? ` · ${t('hello')}, ${tgUser.first_name}` : ''}`}
@@ -997,6 +1061,7 @@ export default function App() {
             </Section>
           </>
         )}
+        <AdSlot pos="BOTTOM" />
       </div>
     </AppRoot>
   );
