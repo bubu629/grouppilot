@@ -102,7 +102,8 @@ export default function App() {
       tg.expand();
       setTgUser(tg.initDataUnsafe?.user || null);
 
-      const startParam: string = tg.initDataUnsafe?.start_param || '';
+      const urlParam = new URLSearchParams(window.location.search).get('tgWebAppStartParam') || '';
+      const startParam: string = tg.initDataUnsafe?.start_param || urlParam;
       if (startParam.startsWith('pkt_')) {
         setTargetId(startParam.slice(4));
         setRoute('PACKETS');
