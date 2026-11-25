@@ -1116,7 +1116,48 @@ app.get("/api/groups/:id/stats", async (c) => {
       remainingCodes: codesLeft?.c || 0,
       activeBroadcasts: bcs?.c || 0,
     },
+    recentWinners: (await c.env.DB.prepare(`
+      SELECT rw.telegram_id, u.first_name, rp.prize_name, rw.claim_code, r.title as raffle_title
+      FROM raffle_winners rw
+      JOIN raffles r ON rw.raffle_id = r.id
+      LEFT JOIN raffle_prizes rp ON rw.prize_id = rp.id
+      LEFT JOIN users u ON rw.telegram_id = u.telegram_id
+      WHERE r.group_id = ?
+      ORDER BY rw.rowid DESC LIMIT 15
+    `).bind(groupId).all()).results || [],
   });
+});
+
+
+app.get("/api/groups/:id/export/winners", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const grp = await c.env.DB.prepare("SELECT plan FROM groups WHERE group_id = ?").bind(groupId).first<any>();
+  if (grp?.plan !== "PRO") return c.json({ ok: false, error: "PRO_REQUIRED" }, 403);
+
+  const rows = await c.env.DB.prepare(`
+    SELECT r.title as raffle_title, rw.telegram_id, u.first_name, rp.prize_name, rw.claim_code
+    FROM raffle_winners rw
+    JOIN raffles r ON rw.raffle_id = r.id
+    LEFT JOIN raffle_prizes rp ON rw.prize_id = rp.id
+    LEFT JOIN users u ON rw.telegram_id = u.telegram_id
+    WHERE r.group_id = ?
+    ORDER BY rw.rowid DESC
+  `).bind(groupId).all<any>();
+
+  const csv = [
+    "raffle_title,telegram_id,name,prize_name,claim_code",
+    ...(rows.results || []).map((r) =>
+      `"${(r.raffle_title || "").replace(/"/g, "")}",${r.telegram_id},"${(r.first_name || "").replace(/"/g, "")}","${(r.prize_name || "").replace(/"/g, "")}",${r.claim_code}`
+    ),
+  ].join("\n");
+
+  const form = new FormData();
+  form.append("chat_id", String(user.id));
+  form.append("caption", "🏆 抽奖中奖名单与核销码（CSV）");
+  form.append("document", new Blob(["\uFEFF" + csv], { type: "text/csv" }), "winners_" + groupId + ".csv");
+  await fetch(`https://api.telegram.org/bot${c.env.TELEGRAM_BOT_TOKEN}/sendDocument`, { method: "POST", body: form });
+  return c.json({ ok: true, sentToDm: true });
 });
 
 // ==================== 4. Webhook & Cron ====================

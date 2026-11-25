@@ -181,6 +181,7 @@ export default function App() {
   const [customBotUsername, setCustomBotUsername] = useState('');
   const [inviteData, setInviteData] = useState<any>({ myLink: null, leaderboard: [] });
   const [proStats, setProStats] = useState<any>(null);
+  const [recentWinners, setRecentWinners] = useState<any[]>([]);
   const [multiBcText, setMultiBcText] = useState('');
   const [banUid, setBanUid] = useState('');
   const [codeItemId, setCodeItemId] = useState('');
@@ -249,7 +250,7 @@ export default function App() {
         refreshAdmin(selectedGroupId);
         refreshStore(selectedGroupId);
         apiFetch(`/api/groups/${selectedGroupId}/invites`).then((d) => d.ok && setInviteData(d));
-        apiFetch(`/api/groups/${selectedGroupId}/stats`).then((d) => d.ok && setProStats(d.stats));
+        apiFetch(`/api/groups/${selectedGroupId}/stats`).then((d) => { if (d.ok) { setProStats(d.stats); setRecentWinners(d.recentWinners || []); } });
       }
     }
   }, [tab, subView, targetId, selectedGroupId]);
@@ -739,10 +740,35 @@ export default function App() {
                 <Button stretched size="s" mode="bezeled" onClick={handleExportCsv}>
                   {zh ? '📥 私聊发 CSV 报表' : '📥 DM CSV Report'}
                 </Button>
-                <Button size="s" mode="outline" onClick={() => apiFetch(`/api/groups/${selectedGroupId}/stats`).then((d) => { if (d.ok) { setProStats(d.stats); setMsg(zh ? '✅ 数据已刷新' : '✅ Refreshed'); } })}>
+                <Button size="s" mode="outline" onClick={() => apiFetch(`/api/groups/${selectedGroupId}/stats`).then((d) => { if (d.ok) { setProStats(d.stats); setRecentWinners(d.recentWinners || []); setMsg(zh ? '✅ 数据已刷新' : '✅ Refreshed'); } })}>
                   {zh ? '🔄 刷新' : '🔄'}
                 </Button>
               </div>
+              <div style={{ padding: '0 14px 10px' }}>
+                <Button
+                  stretched
+                  size="s"
+                  mode="bezeled"
+                  onClick={async () => {
+                    const r = await apiFetch(`/api/groups/${selectedGroupId}/export/winners`);
+                    setMsg(r.ok ? (zh ? '✅ 中奖名单 CSV 已由 Bot 私聊发送给你！' : '✅ Winners CSV sent to your DM!') : `❌ ${r.error}`);
+                  }}
+                >
+                  {zh ? '🏆 导出抽奖中奖名单（Bot 私聊发 CSV）' : '🏆 Export Raffle Winners (DM CSV)'}
+                </Button>
+              </div>
+              {recentWinners.length > 0 && (
+                <div style={{ borderTop: '1px solid rgba(128,128,128,0.18)', paddingTop: 6 }}>
+                  <div style={{ padding: '4px 16px', fontSize: 12, opacity: 0.7 }}>
+                    {zh ? '🏆 最近抽奖中奖记录' : '🏆 Recent Raffle Winners'}
+                  </div>
+                  {recentWinners.map((w: any, i: number) => (
+                    <Cell key={i} subtitle={`${w.raffle_title} · 核销码：${w.claim_code}`} after={w.prize_name}>
+                      🎉 {w.first_name || w.telegram_id}
+                    </Cell>
+                  ))}
+                </div>
+              )}
             </Section>
 
             <Section header={zh ? '1️⃣ 邀请裂变排行（入群自动 +20 积分）' : '1️⃣ Referral Leaderboard'}>
