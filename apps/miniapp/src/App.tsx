@@ -180,6 +180,7 @@ export default function App() {
   const [customBotToken, setCustomBotToken] = useState('');
   const [customBotUsername, setCustomBotUsername] = useState('');
   const [inviteData, setInviteData] = useState<any>({ myLink: null, leaderboard: [] });
+  const [proStats, setProStats] = useState<any>(null);
   const [multiBcText, setMultiBcText] = useState('');
   const [banUid, setBanUid] = useState('');
   const [codeItemId, setCodeItemId] = useState('');
@@ -248,6 +249,7 @@ export default function App() {
         refreshAdmin(selectedGroupId);
         refreshStore(selectedGroupId);
         apiFetch(`/api/groups/${selectedGroupId}/invites`).then((d) => d.ok && setInviteData(d));
+        apiFetch(`/api/groups/${selectedGroupId}/stats`).then((d) => d.ok && setProStats(d.stats));
       }
     }
   }, [tab, subView, targetId, selectedGroupId]);
@@ -708,6 +710,30 @@ export default function App() {
                   <Button stretched mode="bezeled" onClick={() => handleUpgradePro('TEST')}>🧪 1 Star {zh ? '真机支付测试' : 'Live Test'}</Button>
                 </div>
               )}
+            </Section>
+
+            
+            <Section header={zh ? '📊 Pro 数据统计看板' : '📊 Pro Analytics Dashboard'}>
+              <div style={{ padding: '10px 14px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                {[
+                  { label: zh ? '活跃人数' : 'Members', val: proStats?.activeMembers ?? '-' },
+                  { label: zh ? '今日签到' : 'Check-ins', val: proStats?.checkinsToday ?? '-' },
+                  { label: zh ? '裂变拉新' : 'Invites', val: proStats?.totalInvites ?? '-' },
+                  { label: zh ? '发放积分' : 'PTS Issued', val: proStats?.totalPointsIssued ?? '-' },
+                  { label: zh ? '红包/抽奖' : 'Activities', val: proStats?.totalActivities ?? '-' },
+                  { label: zh ? '商城兑换' : 'Orders', val: proStats?.totalRedemptions ?? '-' },
+                ].map((s, idx) => (
+                  <div key={idx} style={{ padding: '10px 6px', borderRadius: 10, background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.16)', textAlign: 'center' }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#38bdf8' }}>{s.val}</div>
+                    <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: '0 14px 10px' }}>
+                <Button stretched size="s" mode="bezeled" onClick={handleExportCsv}>
+                  {zh ? '📥 导出完整积分榜报表（Bot 私聊发 CSV）' : '📥 Export Full Leaderboard (DM CSV)'}
+                </Button>
+              </div>
             </Section>
 
             <Section header={zh ? '1️⃣ 邀请裂变排行（入群自动 +20 积分）' : '1️⃣ Referral Leaderboard'}>

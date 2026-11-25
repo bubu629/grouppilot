@@ -1065,6 +1065,35 @@ app.post("/webhook/custom/:groupId", async (c) => {
   return c.json({ ok: true });
 });
 
+
+// ==================== 12. Pro 群组数据统计看板 ====================
+app.get("/api/groups/:id/stats", async (c) => {
+  const groupId = Number(c.req.param("id"));
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [members, checkinsToday, ptsSum, invitesSum, pkts, rfls, orders] = await Promise.all([
+    c.env.DB.prepare("SELECT COUNT(*) as c FROM points_accounts WHERE group_id = ?").bind(groupId).first<any>(),
+    c.env.DB.prepare("SELECT COUNT(*) as c FROM checkins WHERE group_id = ? AND checkin_date = ?").bind(groupId, today).first<any>(),
+    c.env.DB.prepare("SELECT COALESCE(SUM(total_earned), 0) as s FROM points_accounts WHERE group_id = ?").bind(groupId).first<any>(),
+    c.env.DB.prepare("SELECT COALESCE(SUM(join_count), 0) as s FROM invite_links WHERE group_id = ?").bind(groupId).first<any>(),
+    c.env.DB.prepare("SELECT COUNT(*) as c FROM red_packets WHERE group_id = ?").bind(groupId).first<any>(),
+    c.env.DB.prepare("SELECT COUNT(*) as c FROM raffles WHERE group_id = ?").bind(groupId).first<any>(),
+    c.env.DB.prepare("SELECT COUNT(*) as c FROM store_redemptions WHERE group_id = ?").bind(groupId).first<any>(),
+  ]);
+
+  return c.json({
+    ok: true,
+    stats: {
+      activeMembers: members?.c || 0,
+      checkinsToday: checkinsToday?.c || 0,
+      totalPointsIssued: ptsSum?.s || 0,
+      totalInvites: invitesSum?.s || 0,
+      totalActivities: (pkts?.c || 0) + (rfls?.c || 0),
+      totalRedemptions: orders?.c || 0,
+    },
+  });
+});
+
 // ==================== 4. Webhook & Cron ====================
 app.post('/webhook', async (c) => {
   if (c.req.header('X-Telegram-Bot-Api-Secret-Token') !== c.env.TELEGRAM_WEBHOOK_SECRET) {
