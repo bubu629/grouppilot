@@ -69,10 +69,18 @@ export default function App() {
   const [pktType, setPktType] = useState<'LUCKY' | 'EQUAL'>('LUCKY');
   const [pktDetail, setPktDetail] = useState<any>(null);
 
-  // 抽奖
+  // 抽奖 2.0（支持定时/满人开奖 + 多等级奖品）
   const [rflTitle, setRflTitle] = useState('周末幸运大抽奖');
-  const [rflPrize, setRflPrize] = useState('1000 社区积分 / 神秘大奖');
-  const [rflQuota, setRflQuota] = useState('3');
+  const [rflTrigger, setRflTrigger] = useState<'MANUAL' | 'TIME' | 'PARTICIPANTS'>('MANUAL');
+  const [rflDrawAt, setRflDrawAt] = useState(() => {
+    const d = new Date(Date.now() + 2 * 3600 * 1000);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  });
+  const [rflTargetCount, setRflTargetCount] = useState('20');
+  const [rflPrizes, setRflPrizes] = useState<Array<{ prizeName: string; winnerQuota: string }>>([
+    { prizeName: '一等奖：神秘大奖', winnerQuota: '1' },
+    { prizeName: '二等奖：500 社区积分', winnerQuota: '3' },
+  ]);
   const [rflDetail, setRflDetail] = useState<any>(null);
 
   // 活动报名
@@ -90,7 +98,7 @@ export default function App() {
   const [polDetail, setPolDetail] = useState<any>(null);
   const [polSelected, setPolSelected] = useState<number[]>([]);
 
-  // 群组运营与设置
+  // 群组运营与设置 + Pro 订阅
   const [adminData, setAdminData] = useState<any>(null);
   const [welcomeEnabled, setWelcomeEnabled] = useState(false);
   const [welcomeText, setWelcomeText] = useState('欢迎 {name} 加入本群！🎉');
@@ -132,29 +140,24 @@ export default function App() {
     });
   }, []);
 
+  const refreshAdmin = (gid: string) => {
+    if (!gid) return;
+    apiFetch(`/api/groups/${gid}/admin`).then((d) => {
+      if (d.ok) {
+        setAdminData(d);
+        setWelcomeEnabled(Boolean(d.group?.welcome_enabled));
+        setWelcomeText(d.group?.welcome_text || '欢迎 {name} 加入本群！🎉');
+      }
+    });
+  };
+
   useEffect(() => {
     setMsg('');
-    if (route === 'PACKETS' && targetId) {
-      apiFetch(`/api/red-packets/${targetId}`).then((d) => d.ok && setPktDetail(d));
-    }
-    if (route === 'RAFFLES' && targetId) {
-      apiFetch(`/api/raffles/${targetId}`).then((d) => d.ok && setRflDetail(d));
-    }
-    if (route === 'EVENTS' && targetId) {
-      apiFetch(`/api/events/${targetId}`).then((d) => d.ok && setEvtDetail(d));
-    }
-    if (route === 'POLLS' && targetId) {
-      apiFetch(`/api/polls/${targetId}`).then((d) => d.ok && setPolDetail(d));
-    }
-    if (route === 'ADMIN' && selectedGroupId) {
-      apiFetch(`/api/groups/${selectedGroupId}/admin`).then((d) => {
-        if (d.ok) {
-          setAdminData(d);
-          setWelcomeEnabled(Boolean(d.group?.welcome_enabled));
-          setWelcomeText(d.group?.welcome_text || '欢迎 {name} 加入本群！🎉');
-        }
-      });
-    }
+    if (route === 'PACKETS' && targetId) apiFetch(`/api/red-packets/${targetId}`).then((d) => d.ok && setPktDetail(d));
+    if (route === 'RAFFLES' && targetId) apiFetch(`/api/raffles/${targetId}`).then((d) => d.ok && setRflDetail(d));
+    if (route === 'EVENTS' && targetId) apiFetch(`/api/events/${targetId}`).then((d) => d.ok && setEvtDetail(d));
+    if (route === 'POLLS' && targetId) apiFetch(`/api/polls/${targetId}`).then((d) => d.ok && setPolDetail(d));
+    if (route === 'ADMIN' && selectedGroupId) refreshAdmin(selectedGroupId);
   }, [route, targetId, selectedGroupId]);
 
   const handleCreatePacket = async () => {
@@ -189,14 +192,21 @@ export default function App() {
 
   const handleCreateRaffle = async () => {
     if (!selectedGroupId) return setMsg('请先将 Bot 拉入群组并设为管理员');
+    const validPrizes = rflPrizes
+      .filter((p) => p.prizeName.trim())
+      .map((p) => ({ prizeName: p.prizeName.trim(), prizeType: 'CUSTOM', winnerQuota: Math.max(1, Number(p.winnerQuota) || 1) }));
+    if (!validPrizes.length) return setMsg('请至少填写 1 个奖品');
+
     setMsg('正在发布抽奖到群里...');
     const res = await apiFetch('/api/raffles', {
       method: 'POST',
       body: JSON.stringify({
         groupId: Number(selectedGroupId),
         title: rflTitle,
-        triggerType: 'MANUAL',
-        prizes: [{ prizeName: rflPrize, prizeType: 'CUSTOM', winnerQuota: Number(rflQuota) }],
+        triggerType: rflTrigger,
+        drawAt: rflTrigger === 'TIME' ? new Date(rflDrawAt).getTime() : null,
+        targetParticipants: rflTrigger === 'PARTICIPANTS' ? Number(rflTargetCount) || 10 : null,
+        prizes: validPrizes,
       }),
     });
     if (res.ok) {
@@ -295,6 +305,32 @@ export default function App() {
     setMsg(res.ok ? '✅ 群组入群欢迎语已保存！' : `❌ 保存失败：${res.error}`);
   };
 
+  const handleUpgradePro = async (mode: 'NORMAL' | 'TEST') => {
+    if (!selectedGroupId) return setMsg('请先选择群组');
+    setMsg('正在唤起 Telegram Stars 支付...');
+    const res = await apiFetch('/api/payments/pro-invoice', {
+      method: 'POST',
+      body: JSON.stringify({ groupId: Number(selectedGroupId), mode }),
+    });
+    if (!res.ok || !res.invoiceUrl) return setMsg(`❌ 订单创建失败：${res.error}`);
+
+    const tg = window.Telegram?.WebApp;
+    if (tg?.openInvoice) {
+      tg.openInvoice(res.invoiceUrl, (status: string) => {
+        if (status === 'paid') {
+          setMsg('👑 支付成功！群组已升级为 GroupPilot Pro！');
+          setTimeout(() => refreshAdmin(selectedGroupId), 1500);
+        } else if (status === 'cancelled') {
+          setMsg('已取消支付');
+        } else {
+          setMsg(`支付状态：${status}`);
+        }
+      });
+    } else {
+      window.open(res.invoiceUrl, '_blank');
+    }
+  };
+
   const GroupSelector = () => (
     <div style={{ padding: '8px 16px' }}>
       <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 6 }}>选择目标群组（需先拉 Bot 进群设管理员）</div>
@@ -329,31 +365,36 @@ export default function App() {
             <Section header="社群激励与互动">
               <Cell
                 before={<span style={{ fontSize: 24 }}>🧧</span>}
-                after={<Badge type="number">1.0 积分版</Badge>}
-                subtitle="拼手气 / 均分积分红包（2.0 支持 Gifts）"
+                after={<Badge type="number">积分版</Badge>}
+                subtitle="拼手气 / 均分积分红包"
                 onClick={() => { setTargetId(null); setRoute('PACKETS'); }}
               >
                 红包中心
               </Cell>
               <Cell
                 before={<span style={{ fontSize: 24 }}>🎰</span>}
-                after={<Badge type="dot" />}
-                subtitle="群主自定义奖品 · 手动/定时/满人开奖"
+                after={<Badge type="number">2.0</Badge>}
+                subtitle="多等级奖品 · 手动/定时/满人自动开奖"
                 onClick={() => { setTargetId(null); setRoute('RAFFLES'); }}
               >
                 幸运抽奖
               </Cell>
             </Section>
 
-            <Section header="群组协作与管理">
+            <Section header="群组协作与商业化">
               <Cell before={<span style={{ fontSize: 24 }}>📅</span>} subtitle="名额上限 · 候补自动递补" onClick={() => { setTargetId(null); setRoute('EVENTS'); }}>
                 活动报名
               </Cell>
               <Cell before={<span style={{ fontSize: 24 }}>📊</span>} subtitle="单选 / 多选 / 真匿名投票" onClick={() => { setTargetId(null); setRoute('POLLS'); }}>
                 群组投票
               </Cell>
-              <Cell before={<span style={{ fontSize: 24 }}>⚙️</span>} subtitle="群积分榜 · 入群欢迎语" onClick={() => { setTargetId(null); setRoute('ADMIN'); }}>
-                群组运营与设置
+              <Cell
+                before={<span style={{ fontSize: 24 }}>👑</span>}
+                after={<Badge type="dot" />}
+                subtitle="Stars 升级 Pro · 群积分榜 · 入群欢迎语"
+                onClick={() => { setTargetId(null); setRoute('ADMIN'); }}
+              >
+                群组运营与 Pro 会员
               </Cell>
             </Section>
           </>
@@ -408,17 +449,76 @@ export default function App() {
           </Section>
         )}
 
-        {/* ==================== 幸运抽奖 ==================== */}
+        {/* ==================== 幸运抽奖 2.0 ==================== */}
         {route === 'RAFFLES' && !targetId && (
-          <Section header="发起群组幸运抽奖">
+          <Section header="发起群组幸运抽奖（2.0 进阶版）">
             <GroupSelector />
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <input style={inputStyle} value={rflTitle} onChange={(e) => setRflTitle(e.target.value)} placeholder="抽奖标题" />
-              <input style={inputStyle} value={rflPrize} onChange={(e) => setRflPrize(e.target.value)} placeholder="奖品名称（群主自定义）" />
-              <div style={unitBoxStyle}>
-                <input style={unitInputStyle} type="number" value={rflQuota} onChange={(e) => setRflQuota(e.target.value)} placeholder="中奖名额" />
-                <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: 'nowrap' }}>名</span>
-              </div>
+
+              <div style={{ fontSize: 13, opacity: 0.7 }}>开奖方式</div>
+              <select style={inputStyle} value={rflTrigger} onChange={(e) => setRflTrigger(e.target.value as any)}>
+                <option value="MANUAL">手动开奖（群主随时开奖）</option>
+                <option value="TIME">定时自动开奖（到点自动开奖）</option>
+                <option value="PARTICIPANTS">满人自动开奖（达标瞬间开奖）</option>
+              </select>
+
+              {rflTrigger === 'TIME' && (
+                <input style={inputStyle} type="datetime-local" value={rflDrawAt} onChange={(e) => setRflDrawAt(e.target.value)} />
+              )}
+
+              {rflTrigger === 'PARTICIPANTS' && (
+                <div style={unitBoxStyle}>
+                  <input style={unitInputStyle} type="number" value={rflTargetCount} onChange={(e) => setRflTargetCount(e.target.value)} placeholder="满多少人自动开奖" />
+                  <span style={{ fontSize: 14, opacity: 0.65, marginLeft: 6, whiteSpace: 'nowrap' }}>人开奖</span>
+                </div>
+              )}
+
+              <div style={{ fontSize: 13, opacity: 0.7, marginTop: 4 }}>奖项设置（支持多等级奖品）</div>
+              {rflPrizes.map((p, idx) => (
+                <div key={idx} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <input
+                    style={{ ...inputStyle, flex: 2 }}
+                    value={p.prizeName}
+                    onChange={(e) => {
+                      const next = [...rflPrizes];
+                      next[idx].prizeName = e.target.value;
+                      setRflPrizes(next);
+                    }}
+                    placeholder={`奖品 ${idx + 1} 名称`}
+                  />
+                  <div style={{ ...unitBoxStyle, flex: 1 }}>
+                    <input
+                      style={unitInputStyle}
+                      type="number"
+                      value={p.winnerQuota}
+                      onChange={(e) => {
+                        const next = [...rflPrizes];
+                        next[idx].winnerQuota = e.target.value;
+                        setRflPrizes(next);
+                      }}
+                    />
+                    <span style={{ fontSize: 13, opacity: 0.65, marginLeft: 4 }}>名</span>
+                  </div>
+                  {rflPrizes.length > 1 && (
+                    <button
+                      onClick={() => setRflPrizes(rflPrizes.filter((_, i) => i !== idx))}
+                      style={{ border: 'none', background: 'transparent', color: '#e53935', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              <Button
+                size="s"
+                mode="bezeled"
+                onClick={() => setRflPrizes([...rflPrizes, { prizeName: `三等奖：幸运奖`, winnerQuota: '5' }])}
+              >
+                + 添加一个奖项等级
+              </Button>
+
               <Button stretched onClick={handleCreateRaffle}>🎰 发布抽奖到群聊</Button>
             </div>
           </Section>
@@ -426,7 +526,7 @@ export default function App() {
 
         {route === 'RAFFLES' && targetId && rflDetail && (
           <Section header={`🎰 ${rflDetail.raffle.title}`}>
-            <Cell subtitle={`当前参与：${rflDetail.raffle.participant_count} 人 · 状态：${rflDetail.raffle.status}`}>
+            <Cell subtitle={`当前参与：${rflDetail.raffle.participant_count} 人 · 开奖方式：${rflDetail.raffle.trigger_type} · 状态：${rflDetail.raffle.status}`}>
               奖品：{rflDetail.prizes.map((p: any) => `${p.prize_name}×${p.winner_quota}`).join(' / ')}
             </Cell>
             {rflDetail.raffle.status === 'OPEN' && (
@@ -545,11 +645,26 @@ export default function App() {
           </Section>
         )}
 
-        {/* ==================== 群组运营与设置 ==================== */}
+        {/* ==================== 群组运营与 Pro 会员 ==================== */}
         {route === 'ADMIN' && (
           <>
-            <Section header="入群欢迎语设置">
+            <Section header="👑 GroupPilot Pro 商业订阅（Telegram Stars）">
               <GroupSelector />
+              <Cell
+                after={<Badge type="number">{adminData?.group?.plan === 'PRO' ? 'PRO 👑' : 'FREE'}</Badge>}
+                subtitle={adminData?.group?.plan === 'PRO' ? '当前群组已解锁全部 Pro 高级功能' : '升级 Pro 解锁无限活动、多级抽奖与专属标识'}
+              >
+                当前群组套餐
+              </Cell>
+              {adminData?.group?.plan !== 'PRO' && (
+                <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <Button stretched onClick={() => handleUpgradePro('NORMAL')}>⭐ 100 Stars 升级 Pro（30天）</Button>
+                  <Button stretched mode="bezeled" onClick={() => handleUpgradePro('TEST')}>🧪 1 Star 真机支付测试</Button>
+                </div>
+              )}
+            </Section>
+
+            <Section header="入群欢迎语设置">
               <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
                   <input type="checkbox" checked={welcomeEnabled} onChange={(e) => setWelcomeEnabled(e.target.checked)} />

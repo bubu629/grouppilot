@@ -547,7 +547,7 @@ app.post("/api/polls/:id/vote", async (c) => {
 
 app.get("/api/groups/:id/admin", async (c) => {
   const groupId = Number(c.req.param("id"));
-  const group = await c.env.DB.prepare("SELECT group_id, title, welcome_enabled, welcome_text FROM groups WHERE group_id = ?").bind(groupId).first();
+  const group = await c.env.DB.prepare("SELECT group_id, title, plan, welcome_enabled, welcome_text FROM groups WHERE group_id = ?").bind(groupId).first();
   if (!group) return c.json({ ok: false, error: "NOT_FOUND" }, 404);
   const leaderboard = await c.env.DB.prepare(`
     SELECT p.telegram_id, p.balance, p.total_earned, u.first_name
@@ -570,6 +570,33 @@ app.post("/api/groups/:id/settings", async (c) => {
   await c.env.DB.prepare("UPDATE groups SET welcome_enabled = ?, welcome_text = ?, updated_at = ? WHERE group_id = ?")
     .bind(body.welcomeEnabled ? 1 : 0, body.welcomeText || "", Date.now(), groupId).run();
   return c.json({ ok: true });
+});
+
+
+// ==================== 7. Telegram Stars Pro 订阅支付 ====================
+app.post("/api/payments/pro-invoice", async (c) => {
+  const user = c.get("tgUser");
+  const body = await c.req.json();
+  const groupId = Number(body.groupId);
+  const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, groupId, user.id);
+  if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
+
+  const isTest = body.mode === "TEST";
+  const amount = isTest ? 1 : 100;
+  const title = isTest ? "GroupPilot Pro 测试订阅" : "GroupPilot Pro 群组会员（30天）";
+  const description = isTest ? "1 Star 真机支付闭环测试，支付后立即激活 Pro" : "解锁无限活动、多级抽奖、定时/满人自动开奖与专属标识";
+
+  const res = await tgApi(c.env.TELEGRAM_BOT_TOKEN, "createInvoiceLink", {
+    title,
+    description,
+    payload: "pro:" + groupId + ":" + (isTest ? 7 : 30),
+    provider_token: "",
+    currency: "XTR",
+    prices: [{ label: title, amount }],
+  });
+
+  if (!res.ok) return c.json({ ok: false, error: res.description || "INVOICE_FAILED" }, 400);
+  return c.json({ ok: true, invoiceUrl: res.result });
 });
 
 // ==================== 4. Webhook & Cron ====================
