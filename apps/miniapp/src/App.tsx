@@ -42,14 +42,12 @@ export default function App() {
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [msg, setMsg] = useState<string>('');
 
-  // 红包表单与详情状态
   const [pktTitle, setPktTitle] = useState('群友专属福利红包');
   const [pktAmount, setPktAmount] = useState('1000');
   const [pktCount, setPktCount] = useState('10');
   const [pktType, setPktType] = useState<'LUCKY' | 'EQUAL'>('LUCKY');
   const [pktDetail, setPktDetail] = useState<any>(null);
 
-  // 抽奖表单与详情状态
   const [rflTitle, setRflTitle] = useState('周末幸运大抽奖');
   const [rflPrize, setRflPrize] = useState('1000 社区积分 / 神秘大奖');
   const [rflQuota, setRflQuota] = useState('3');
@@ -238,7 +236,6 @@ export default function App() {
           </Button>
         )}
 
-        {/* ==================== 红包中心 ==================== */}
         {route === 'PACKETS' && !targetId && (
           <Section header="发一个群组积分红包">
             <GroupSelector />
@@ -275,7 +272,6 @@ export default function App() {
           </Section>
         )}
 
-        {/* ==================== 幸运抽奖 ==================== */}
         {route === 'RAFFLES' && !targetId && (
           <Section header="发起群组幸运抽奖">
             <GroupSelector />
