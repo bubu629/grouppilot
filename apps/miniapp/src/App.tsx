@@ -461,7 +461,32 @@ export default function App() {
           </Section>
         )}
 
-        {msg && <div style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(36,129,204,0.12)', fontSize: 13 }}>{msg}</div>}
+        {msg && (
+          <div
+            onClick={() => setMsg('')}
+            style={{
+              position: 'fixed',
+              top: 56,
+              left: 16,
+              right: 16,
+              zIndex: 99,
+              padding: '12px 14px',
+              borderRadius: 12,
+              background: 'rgba(15, 23, 42, 0.94)',
+              border: '1px solid rgba(56, 189, 248, 0.45)',
+              color: '#f8fafc',
+              fontSize: 13,
+              fontWeight: 500,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
+              textAlign: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            {msg.includes('PRO_REQUIRED')
+              ? (zh ? '👑 该功能为 Pro 专享，请先点击上方按钮升级 Pro' : '👑 Pro feature only. Please upgrade to Pro first.')
+              : msg}
+          </div>
+        )}
 
         {/* ==================== TAB 1: 互动中心（2列宫格） ==================== */}
         {tab === 'ENGAGE' && subView === 'NONE' && (
