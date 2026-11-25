@@ -260,7 +260,7 @@ export default function App() {
     if (isTop) {
       const ad = activeAds.top;
       return (
-        <div style={{ padding: '8px 10px', borderRadius: 12, border: '1px dashed rgba(128,128,128,0.35)', background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.72)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+        <div style={{ padding: '8px 10px', borderRadius: 12, border: '1px dashed rgba(128,128,128,0.35)', background: 'rgba(15, 23, 42, 0.68)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
           <div
             onClick={() => {
               if (ad?.target_url) window.open(ad.target_url, '_blank');
@@ -294,7 +294,7 @@ export default function App() {
           <div
             key={ad.id}
             onClick={() => window.open(ad.target_url, '_blank')}
-            style={{ padding: '8px 10px', borderRadius: 12, border: '1px solid rgba(128,128,128,0.22)', background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.78)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer' }}
+            style={{ padding: '8px 10px', borderRadius: 12, border: '1px solid rgba(128,128,128,0.22)', background: 'rgba(15, 23, 42, 0.72)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: 'pointer' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
               <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(128,128,128,0.18)' }}>{zh ? '赞助' : 'AD'}</span>
@@ -303,7 +303,7 @@ export default function App() {
             <span style={{ fontSize: 11, opacity: 0.5, whiteSpace: 'nowrap' }}>↗</span>
           </div>
         ))}
-        <div style={{ padding: '7px 10px', borderRadius: 12, border: '1px dashed rgba(128,128,128,0.35)', background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.55)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+        <div style={{ padding: '7px 10px', borderRadius: 12, border: '1px dashed rgba(128,128,128,0.35)', background: 'rgba(15, 23, 42, 0.55)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
           <span onClick={() => { setAdPos('BOTTOM'); setShowAdBuy(true); }} style={{ fontSize: 12, opacity: 0.75, cursor: 'pointer' }}>
             {activeAds.bottoms.length >= 3 ? (zh ? '🔒 尾部广告位已满（3/3）' : '🔒 Bottom Ad Slots Full (3/3)') : (zh ? `📢 尾部推广位招租（剩 ${3 - activeAds.bottoms.length}/3 位 · 30 Stars/7天）` : `📢 Bottom Slots (${3 - activeAds.bottoms.length}/3 left · 30 Stars/7d)`)}
           </span>
@@ -367,7 +367,7 @@ export default function App() {
   };
 
   const GridCard = ({ icon, title, desc, badge, onClick }: any) => (
-    <div onClick={onClick} style={{ padding: 14, borderRadius: 14, background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.78)', backdropFilter: 'blur(10px)', border: '1px solid rgba(128,128,128,0.16)', boxShadow: '0 4px 14px rgba(0,0,0,0.04)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 6, position: 'relative' }}>
+    <div onClick={onClick} style={{ padding: 14, borderRadius: 14, background: 'rgba(15, 23, 42, 0.72)', backdropFilter: 'blur(10px)', border: '1px solid rgba(128,128,128,0.16)', boxShadow: '0 4px 14px rgba(0,0,0,0.04)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 6, position: 'relative' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: 28 }}>{icon}</span>
         {badge && <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 99, background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontWeight: 600 }}>{badge}</span>}
@@ -383,21 +383,40 @@ export default function App() {
       <style>{`
         .gp-geo-shell {
           min-height: 100vh;
-          background-color: #eef2f6;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%2364748b' stroke-opacity='0.18' stroke-width='1'%3E%3Cpath d='M0 0h56v56H0z'/%3E%3Cpath d='M0 56L56 0M28 0v56M0 28h56' stroke-opacity='0.09'/%3E%3Ccircle cx='28' cy='28' r='1.6' fill='%2364748b' fill-opacity='0.28' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
-          background-size: 56px 56px;
+          color: #e2e8f0;
+          --tgui--bg_color: rgba(15, 23, 42, 0.72);
+          --tgui--secondary_bg_color: #050814;
+          --tgui--section_bg_color: rgba(15, 23, 42, 0.68);
+          --tgui--text_color: #f1f5f9;
+          --tgui--subtitle_text_color: #94a3b8;
+          --tgui--hint_color: #94a3b8;
+          --tgui--section_header_text_color: #7dd3fc;
+          background-color: #050814;
+          background-image:
+            radial-gradient(at 15% 10%, rgba(56, 189, 248, 0.22) 0px, transparent 48%),
+            radial-gradient(at 88% 18%, rgba(139, 92, 246, 0.24) 0px, transparent 46%),
+            radial-gradient(at 50% 90%, rgba(14, 165, 233, 0.16) 0px, transparent 52%),
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='%23ffffff'%3E%3Ccircle cx='14' cy='22' r='1' fill-opacity='0.65'/%3E%3Ccircle cx='68' cy='16' r='0.8' fill-opacity='0.45'/%3E%3Ccircle cx='102' cy='44' r='1.2' fill-opacity='0.75'/%3E%3Ccircle cx='34' cy='76' r='0.9' fill-opacity='0.5'/%3E%3Ccircle cx='88' cy='96' r='1.1' fill-opacity='0.6'/%3E%3Ccircle cx='18' cy='108' r='0.7' fill-opacity='0.4'/%3E%3C/g%3E%3Cpath d='M0 60h120M60 0v120' stroke='%2338bdf8' stroke-opacity='0.06' stroke-width='0.8'/%3E%3C/svg%3E");
+          background-size: 100% 100%, 100% 100%, 100% 100%, 120px 120px;
           background-attachment: fixed;
         }
         .gp-geo-shell section {
+          background: rgba(15, 23, 42, 0.68) !important;
+          backdrop-filter: blur(12px);
+          border: 1px solid rgba(56, 189, 248, 0.2);
           border-radius: 14px !important;
           overflow: hidden;
-          box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+          box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+        }
+        .gp-geo-shell select option {
+          background: #0f172a;
+          color: #f1f5f9;
         }
       `}</style>
       <div className="gp-geo-shell">
 
       {/* 顶部紧凑全局栏 */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 20, backdropFilter: 'blur(12px)', background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.88)', padding: '10px 12px', borderBottom: '1px solid rgba(128,128,128,0.15)', display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ position: 'sticky', top: 0, zIndex: 20, backdropFilter: 'blur(12px)', background: 'rgba(9, 14, 28, 0.82)', padding: '10px 12px', borderBottom: '1px solid rgba(128,128,128,0.15)', display: 'flex', alignItems: 'center', gap: 8 }}>
         <select
           style={{ flex: 1, padding: '6px 10px', borderRadius: 10, border: '1px solid rgba(128,128,128,0.3)', background: 'transparent', color: 'inherit', fontSize: 13, fontWeight: 600 }}
           value={selectedGroupId}
@@ -710,7 +729,7 @@ export default function App() {
       </div>
 
       {/* 底部 4-Tab 原生导航栏 */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderTop: '1px solid rgba(128,128,128,0.2)', backdropFilter: 'blur(12px)', background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.92)', padding: '6px 0 10px' }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 30, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderTop: '1px solid rgba(128,128,128,0.2)', backdropFilter: 'blur(12px)', background: 'rgba(9, 14, 28, 0.88)', padding: '6px 0 10px' }}>
         {[
           { id: 'ENGAGE', icon: '🎉', label: zh ? '互动' : 'Engage' },
           { id: 'STORE', icon: '🎁', label: zh ? '福利' : 'Store' },
