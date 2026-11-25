@@ -1,0 +1,15 @@
+name = "grouppilot-worker"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+
+[vars]
+BOT_USERNAME = "GroupPilot6bot"
+MINIAPP_URL = "https://example.com"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "grouppilot-db"
+database_id = "d958d801-0593-48b4-8904-3a2eb7e1649e"
+
+[triggers]
+crons = ["* * * * *"]

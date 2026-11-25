@@ -1,0 +1,13 @@
+{
+  "name": "grouppilot",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:miniapp": "npm run build --workspace=apps/miniapp",
+    "dev:miniapp": "npm run dev --workspace=apps/miniapp",
+    "dev:worker": "npm run dev --workspace=apps/worker"
+  }
+}
