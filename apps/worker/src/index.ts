@@ -928,9 +928,16 @@ app.get("/api/ads/active", async (c) => {
     "SELECT id, title, target_url, expires_at FROM ad_orders WHERE position = 'TOP' AND status = 'ACTIVE' AND expires_at > ? ORDER BY created_at DESC LIMIT 1"
   ).bind(now).first();
   const bottomRes = await c.env.DB.prepare(
-    "SELECT id, title, target_url, expires_at FROM ad_orders WHERE position = 'BOTTOM' AND status = 'ACTIVE' AND expires_at > ? ORDER BY created_at DESC LIMIT 10"
+    "SELECT id, title, target_url, expires_at FROM ad_orders WHERE position = 'BOTTOM' AND status = 'ACTIVE' AND expires_at > ? ORDER BY created_at DESC LIMIT 3"
   ).bind(now).all();
-  return c.json({ ok: true, top: top || null, bottoms: bottomRes.results || [] });
+  const bottoms = bottomRes.results || [];
+  return c.json({
+    ok: true,
+    top: top || null,
+    bottoms,
+    topFull: Boolean(top),
+    bottomRemaining: Math.max(0, 3 - bottoms.length),
+  });
 });
 
 app.post("/api/ads/invoice", async (c) => {
@@ -943,6 +950,14 @@ app.post("/api/ads/invoice", async (c) => {
 
   if (!title || !/^https?:\/\//i.test(targetUrl)) {
     return c.json({ ok: false, error: "INVALID_TITLE_OR_URL" }, 400);
+  }
+  const nowCheck = Date.now();
+  const activeCnt = await c.env.DB.prepare(
+    "SELECT COUNT(*) as c FROM ad_orders WHERE position = ? AND status = 'ACTIVE' AND expires_at > ?"
+  ).bind(position, nowCheck).first<any>();
+  const maxLimit = position === "TOP" ? 1 : 3;
+  if ((activeCnt?.c || 0) >= maxLimit) {
+    return c.json({ ok: false, error: position === "TOP" ? "TOP_SLOT_FULL" : "BOTTOM_SLOTS_FULL_MAX_3" }, 400);
   }
 
   const days = isTest ? 1 : 7;

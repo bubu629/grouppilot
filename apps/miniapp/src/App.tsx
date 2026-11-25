@@ -305,12 +305,14 @@ export default function App() {
         ))}
         <div style={{ padding: '7px 10px', borderRadius: 12, border: '1px dashed rgba(128,128,128,0.35)', background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.55)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
           <span onClick={() => { setAdPos('BOTTOM'); setShowAdBuy(true); }} style={{ fontSize: 12, opacity: 0.75, cursor: 'pointer' }}>
-            {zh ? '📢 尾部推广位招租（支持多条展示 · 30 Stars/7天）' : '📢 Bottom Ad Slots Open (30 Stars/7d)'}
+            {activeAds.bottoms.length >= 3 ? (zh ? '🔒 尾部广告位已满（3/3）' : '🔒 Bottom Ad Slots Full (3/3)') : (zh ? `📢 尾部推广位招租（剩 ${3 - activeAds.bottoms.length}/3 位 · 30 Stars/7天）` : `📢 Bottom Slots (${3 - activeAds.bottoms.length}/3 left · 30 Stars/7d)`)}
           </span>
           <div style={{ display: 'flex', gap: 4 }}>
+            {activeAds.bottoms.length < 3 && (
             <button onClick={() => { setAdPos('BOTTOM'); setShowAdBuy(true); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(255,152,0,0.16)', color: '#e65100', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
               {zh ? '投放' : 'Buy'}
             </button>
+          )}
             <button onClick={() => { setShowAdBuy(false); setSubView('NONE'); setTab('PRO'); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
               {zh ? '去广告' : 'No Ads'}
             </button>
