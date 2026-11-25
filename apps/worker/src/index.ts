@@ -628,7 +628,7 @@ app.post("/api/groups/:id/checkin", async (c) => {
   const now = Date.now();
 
   await c.env.DB.batch([
-    c.env.DB.prepare("INSERT INTO points_ledger (id, group_id, telegram_id, delta, reason, ref_id, created_at) VALUES (?, ?, ?, ?, 'CHECKIN', ?, ?)")
+    c.env.DB.prepare("INSERT INTO points_ledger (id, group_id, telegram_id, delta, biz_type, biz_id, created_at) VALUES (?, ?, ?, ?, 'CHECKIN', ?, ?)")
       .bind(crypto.randomUUID(), groupId, user.id, points, today, now),
     c.env.DB.prepare("INSERT INTO checkins (id, group_id, telegram_id, checkin_date, streak, points_awarded, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
       .bind(crypto.randomUUID(), groupId, user.id, today, streak, points, now),
@@ -701,7 +701,7 @@ app.post("/api/groups/:id/store/redeem", async (c) => {
   const redeemCode = stockCode ? stockCode.code_text : ("GP-" + crypto.randomUUID().slice(0, 8).toUpperCase());
   const now = Date.now();
   const stmts: D1PreparedStatement[] = [
-    c.env.DB.prepare("INSERT INTO points_ledger (id, group_id, telegram_id, delta, reason, ref_id, created_at) VALUES (?, ?, ?, ?, 'REDEEM', ?, ?)")
+    c.env.DB.prepare("INSERT INTO points_ledger (id, group_id, telegram_id, delta, biz_type, biz_id, created_at) VALUES (?, ?, ?, ?, 'REDEEM', ?, ?)")
       .bind(crypto.randomUUID(), groupId, user.id, -item.cost_points, item.id, now),
     c.env.DB.prepare("UPDATE points_accounts SET balance = balance - ?, updated_at = ? WHERE group_id = ? AND telegram_id = ?")
       .bind(item.cost_points, now, groupId, user.id),

@@ -433,7 +433,7 @@ export default function App() {
         <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, background: isPro ? 'rgba(255,193,7,0.2)' : 'rgba(128,128,128,0.15)', fontWeight: 700 }}>
           {isPro ? 'PRO' : 'FREE'}
         </span>
-        <button onClick={handleShareApp} style={{ padding: '4px 8px', borderRadius: 8, border: 'none', background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+        <button onClick={handleShareApp} style={{ padding: '4px 8px', borderRadius: 8, border: 'none', background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
           📤 {zh ? '分享' : 'Share'}
         </button>
         <button onClick={toggleLang} style={{ padding: '4px 8px', borderRadius: 8, border: '1px solid rgba(128,128,128,0.3)', background: 'transparent', color: 'inherit', fontSize: 12, cursor: 'pointer' }}>
