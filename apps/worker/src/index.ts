@@ -547,7 +547,7 @@ app.post("/api/polls/:id/vote", async (c) => {
 
 app.get("/api/groups/:id/admin", async (c) => {
   const groupId = Number(c.req.param("id"));
-  const group = await c.env.DB.prepare("SELECT group_id, title, plan, plan_expires_at, welcome_enabled, welcome_text, anti_spam_enabled, ban_links, banned_keywords, force_channel_id, custom_footer, paid_join_stars, paid_join_days FROM groups WHERE group_id = ?").bind(groupId).first();
+  const group = await c.env.DB.prepare("SELECT group_id, title, plan, plan_expires_at, welcome_enabled, welcome_text, anti_spam_enabled, ban_links, banned_keywords, force_channel_id, custom_footer, paid_join_stars, paid_join_days, custom_bot_username FROM groups WHERE group_id = ?").bind(groupId).first();
   if (!group) return c.json({ ok: false, error: "NOT_FOUND" }, 404);
   const leaderboard = await c.env.DB.prepare(`
     SELECT p.telegram_id, p.balance, p.total_earned, u.first_name
@@ -826,10 +826,11 @@ app.post("/api/groups/:id/invites", async (c) => {
 app.post("/api/groups/:id/paid-join-invoice", async (c) => {
   const user = c.get("tgUser");
   const groupId = Number(c.req.param("id"));
-  const grp = await c.env.DB.prepare("SELECT plan, title, paid_join_stars, paid_join_days FROM groups WHERE group_id = ?").bind(groupId).first<any>();
+  const grp = await c.env.DB.prepare("SELECT plan, title, paid_join_stars, paid_join_days, custom_bot_token FROM groups WHERE group_id = ?").bind(groupId).first<any>();
   if (grp?.plan !== "PRO" || !grp.paid_join_stars) return c.json({ ok: false, error: "PAID_JOIN_NOT_ENABLED" }, 400);
 
-  const res = await tgApi(c.env.TELEGRAM_BOT_TOKEN, "createInvoiceLink", {
+  const activeToken = grp.custom_bot_token || c.env.TELEGRAM_BOT_TOKEN;
+  const res = await tgApi(activeToken, "createInvoiceLink", {
     title: "VIP 进群通行证：" + grp.title,
     description: "支付后 Bot 将立即私发一次性专属进群链接（有效期 " + (grp.paid_join_days || 30) + " 天）",
     payload: "join:" + groupId + ":" + user.id,
@@ -980,6 +981,88 @@ app.post("/api/ads/invoice", async (c) => {
 
   if (!res.ok) return c.json({ ok: false, error: res.description || "INVOICE_FAILED" }, 400);
   return c.json({ ok: true, invoiceUrl: res.result, adId: id });
+});
+
+
+// ==================== 11. Pro 专属：接入自有 Bot（Stars 直收） ====================
+app.post("/api/groups/:id/custom-bot", async (c) => {
+  const user = c.get("tgUser");
+  const groupId = Number(c.req.param("id"));
+  const { isAdmin } = await checkGroupMembership(c.env.TELEGRAM_BOT_TOKEN, groupId, user.id);
+  if (!isAdmin) return c.json({ ok: false, error: "ADMIN_REQUIRED" }, 403);
+
+  const grp = await c.env.DB.prepare("SELECT plan FROM groups WHERE group_id = ?").bind(groupId).first<any>();
+  if (grp?.plan !== "PRO") return c.json({ ok: false, error: "PRO_REQUIRED" }, 403);
+
+  const body = await c.req.json();
+  const botToken = String(body.botToken || "").trim();
+
+  // 传空字符串视为解绑
+  if (!botToken) {
+    await c.env.DB.prepare("UPDATE groups SET custom_bot_token = '', custom_bot_username = '', updated_at = ? WHERE group_id = ?")
+      .bind(Date.now(), groupId).run();
+    return c.json({ ok: true, username: "" });
+  }
+
+  // 1. 校验 Token 有效性
+  const me = await tgApi(botToken, "getMe", {});
+  if (!me.ok || !me.result?.username) {
+    return c.json({ ok: false, error: "INVALID_BOT_TOKEN" }, 400);
+  }
+
+  // 2. 自动为该自有 Bot 注册专属 Webhook
+  const webhookUrl = new URL(c.req.url).origin + "/webhook/custom/" + groupId;
+  const wh = await tgApi(botToken, "setWebhook", {
+    url: webhookUrl,
+    allowed_updates: ["message", "pre_checkout_query"],
+  });
+  if (!wh.ok) {
+    return c.json({ ok: false, error: wh.description || "SET_WEBHOOK_FAILED" }, 400);
+  }
+
+  // 3. 保存到数据库
+  await c.env.DB.prepare("UPDATE groups SET custom_bot_token = ?, custom_bot_username = ?, updated_at = ? WHERE group_id = ?")
+    .bind(botToken, me.result.username, Date.now(), groupId).run();
+
+  return c.json({ ok: true, username: me.result.username });
+});
+
+// Pro 自有 Bot 专属 Webhook（处理 Stars 支付确认与自动发一次性进群链接）
+app.post("/webhook/custom/:groupId", async (c) => {
+  const groupId = Number(c.req.param("groupId"));
+  const grp = await c.env.DB.prepare("SELECT custom_bot_token FROM groups WHERE group_id = ?").bind(groupId).first<any>();
+  if (!grp?.custom_bot_token) return c.json({ ok: false }, 404);
+
+  const token = grp.custom_bot_token;
+  const update: any = await c.req.json();
+
+  if (update.pre_checkout_query) {
+    await tgApi(token, "answerPreCheckoutQuery", {
+      pre_checkout_query_id: update.pre_checkout_query.id,
+      ok: true,
+    });
+    return c.json({ ok: true });
+  }
+
+  if (update.message?.successful_payment) {
+    const payload: string = update.message.successful_payment.invoice_payload || "";
+    if (payload.startsWith("join:")) {
+      const linkRes = await tgApi(token, "createChatInviteLink", {
+        chat_id: groupId,
+        member_limit: 1,
+      });
+      if (linkRes.ok) {
+        await tgApi(token, "sendMessage", {
+          chat_id: update.message.chat.id,
+          text: "🎟️ *VIP 进群支付成功！*\n\n这是你专属的一次性进群链接（仅限本人使用一次）：\n" + linkRes.result.invite_link,
+          parse_mode: "Markdown",
+        });
+      }
+    }
+    return c.json({ ok: true });
+  }
+
+  return c.json({ ok: true });
 });
 
 // ==================== 4. Webhook & Cron ====================

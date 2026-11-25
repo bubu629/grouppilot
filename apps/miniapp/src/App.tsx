@@ -177,6 +177,8 @@ export default function App() {
   const [forceChannel, setForceChannel] = useState('');
   const [customFooter, setCustomFooter] = useState('');
   const [paidStars, setPaidStars] = useState('50');
+  const [customBotToken, setCustomBotToken] = useState('');
+  const [customBotUsername, setCustomBotUsername] = useState('');
   const [inviteData, setInviteData] = useState<any>({ myLink: null, leaderboard: [] });
   const [multiBcText, setMultiBcText] = useState('');
   const [banUid, setBanUid] = useState('');
@@ -217,6 +219,7 @@ export default function App() {
         setForceChannel(d.group.force_channel_id || '');
         setCustomFooter(d.group.custom_footer || '');
         setPaidStars(String(d.group.paid_join_stars || 0));
+        setCustomBotUsername(d.group.custom_bot_username || '');
       }
     });
     apiFetch(`/api/groups/${gid}/broadcasts`).then((d) => d.ok && setBroadcasts(d.broadcasts || []));
@@ -691,6 +694,62 @@ export default function App() {
                 )}
               </div>
               {inviteData.leaderboard?.map((r: any, i: number) => <Cell key={i} after={`${r.join_count} 人`}>{i + 1}. {r.first_name || r.creator_id}</Cell>)}
+            </Section>
+
+            
+            <Section header={zh ? '🤖 接入自有 Bot（Stars 100% 直收）' : '🤖 Connect Own Bot (100% Direct Stars)'}>
+              <Cell
+                subtitle={customBotUsername ? (zh ? '付费进群 Stars 将直接进入你的 Bot 余额' : 'Paid join Stars go directly to your Bot') : (zh ? '请先将你的 Bot 拉进群设为管理员，再粘贴 Token' : 'Add your Bot as group admin, then paste Token')}
+              >
+                {customBotUsername ? `✅ 已绑定 @${customBotUsername}` : (zh ? '当前使用官方默认 Bot' : 'Using default official Bot')}
+              </Cell>
+              <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <input
+                  style={inputStyle}
+                  type="password"
+                  value={customBotToken}
+                  onChange={(e) => setCustomBotToken(e.target.value)}
+                  placeholder={zh ? '粘贴 @BotFather 获取的 Bot Token' : 'Paste Bot Token from @BotFather'}
+                />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button
+                    stretched
+                    size="s"
+                    onClick={async () => {
+                      if (!customBotToken.trim()) return setMsg(zh ? '请先粘贴 Bot Token' : 'Paste Bot Token first');
+                      const r = await apiFetch(`/api/groups/${selectedGroupId}/custom-bot`, {
+                        method: 'POST',
+                        body: JSON.stringify({ botToken: customBotToken.trim() }),
+                      });
+                      if (r.ok) {
+                        setCustomBotUsername(r.username);
+                        setCustomBotToken('');
+                        setMsg(zh ? `✅ 已成功接入 @${r.username} 并自动配置 Webhook！` : `✅ Connected @${r.username}!`);
+                      } else setMsg(`❌ ${r.error}`);
+                    }}
+                  >
+                    {zh ? '🔗 绑定自有 Bot' : '🔗 Connect Bot'}
+                  </Button>
+                  {customBotUsername && (
+                    <Button
+                      size="s"
+                      mode="outline"
+                      onClick={async () => {
+                        const r = await apiFetch(`/api/groups/${selectedGroupId}/custom-bot`, {
+                          method: 'POST',
+                          body: JSON.stringify({ botToken: '' }),
+                        });
+                        if (r.ok) {
+                          setCustomBotUsername('');
+                          setMsg(zh ? '已解绑自有 Bot' : 'Disconnected');
+                        }
+                      }}
+                    >
+                      {zh ? '解绑' : 'Unlink'}
+                    </Button>
+                  )}
+                </div>
+              </div>
             </Section>
 
             <Section header={zh ? '2️⃣ 付费进群 · 3️⃣ 强关频道 · 7️⃣ 白标' : '2️⃣ Paid Join · 3️⃣ Force Sub · 7️⃣ White-Label'}>
