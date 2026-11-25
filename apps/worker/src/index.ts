@@ -920,6 +920,53 @@ app.get("/api/groups/:id/export/leaderboard", async (c) => {
   return c.json({ ok: true, sentToDm: true });
 });
 
+
+// ==================== 10. 自助广告位购买与展示 ====================
+app.get("/api/ads/active", async (c) => {
+  const now = Date.now();
+  const top = await c.env.DB.prepare(
+    "SELECT id, title, target_url, expires_at FROM ad_orders WHERE position = 'TOP' AND status = 'ACTIVE' AND expires_at > ? ORDER BY created_at DESC LIMIT 1"
+  ).bind(now).first();
+  const bottom = await c.env.DB.prepare(
+    "SELECT id, title, target_url, expires_at FROM ad_orders WHERE position = 'BOTTOM' AND status = 'ACTIVE' AND expires_at > ? ORDER BY created_at DESC LIMIT 1"
+  ).bind(now).first();
+  return c.json({ ok: true, top: top || null, bottom: bottom || null });
+});
+
+app.post("/api/ads/invoice", async (c) => {
+  const user = c.get("tgUser");
+  const body = await c.req.json();
+  const position = body.position === "BOTTOM" ? "BOTTOM" : "TOP";
+  const isTest = body.mode === "TEST";
+  const title = String(body.title || "").trim().slice(0, 36);
+  const targetUrl = String(body.targetUrl || "").trim();
+
+  if (!title || !/^https?:\/\//i.test(targetUrl)) {
+    return c.json({ ok: false, error: "INVALID_TITLE_OR_URL" }, 400);
+  }
+
+  const days = isTest ? 1 : 7;
+  const amount = isTest ? 1 : (position === "TOP" ? 50 : 30);
+  const id = crypto.randomUUID();
+
+  await c.env.DB.prepare(
+    "INSERT INTO ad_orders (id, buyer_id, position, title, target_url, stars_amount, days, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)"
+  ).bind(id, user.id, position, title, targetUrl, amount, days, Date.now()).run();
+
+  const label = isTest ? "广告位 1 Star 测试（1天）" : (position === "TOP" ? "顶部黄金广告位（7天）" : "底部品牌广告位（7天）");
+  const res = await tgApi(c.env.TELEGRAM_BOT_TOKEN, "createInvoiceLink", {
+    title: "GroupPilot " + label,
+    description: "广告标题：" + title + "，付款后立即全站生效展示",
+    payload: "ad:" + id,
+    provider_token: "",
+    currency: "XTR",
+    prices: [{ label, amount }],
+  });
+
+  if (!res.ok) return c.json({ ok: false, error: res.description || "INVOICE_FAILED" }, 400);
+  return c.json({ ok: true, invoiceUrl: res.result, adId: id });
+});
+
 // ==================== 4. Webhook & Cron ====================
 app.post('/webhook', async (c) => {
   if (c.req.header('X-Telegram-Bot-Api-Secret-Token') !== c.env.TELEGRAM_WEBHOOK_SECRET) {

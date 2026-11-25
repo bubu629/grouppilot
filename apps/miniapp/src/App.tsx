@@ -78,6 +78,49 @@ export default function App() {
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [msg, setMsg] = useState<string>('');
 
+  const [activeAds, setActiveAds] = useState<{ top: any; bottom: any }>({ top: null, bottom: null });
+  const [showAdBuy, setShowAdBuy] = useState(false);
+  const [adPos, setAdPos] = useState<'TOP' | 'BOTTOM'>('TOP');
+  const [adTitleInput, setAdTitleInput] = useState('');
+  const [adUrlInput, setAdUrlInput] = useState('https://t.me/');
+
+  const refreshAds = () => {
+    apiFetch('/api/ads/active').then((d) => d.ok && setActiveAds({ top: d.top, bottom: d.bottom }));
+  };
+
+  const handleShareApp = () => {
+    const shareUrl = 'https://t.me/grouppilot6299bot';
+    const shareText = zh
+      ? '🚀 推荐一款超好用的 Telegram 群组运营神器 GroupPilot：支持拼手气红包、多级自动抽奖、每日签到积分商城、防外链反垃圾和定时播报，免费开用！'
+      : '🚀 Check out GroupPilot — an all-in-one Telegram Mini App for group ops: Red Packets, Auto Raffles, Points Store, Anti-Spam & Broadcasts!';
+    const tgShare = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+    if (window.Telegram?.WebApp?.openTelegramLink) {
+      window.Telegram.WebApp.openTelegramLink(tgShare);
+    } else {
+      window.open(tgShare, '_blank');
+    }
+  };
+
+  const handleBuyAd = async (mode: 'NORMAL' | 'TEST') => {
+    if (!adTitleInput.trim() || !/^https?:\/\//i.test(adUrlInput.trim())) {
+      return setMsg(zh ? '请填写广告标题和以 https:// 开头的跳转链接' : 'Enter ad title & valid https:// URL');
+    }
+    const res = await apiFetch('/api/ads/invoice', {
+      method: 'POST',
+      body: JSON.stringify({ position: adPos, title: adTitleInput.trim(), targetUrl: adUrlInput.trim(), mode }),
+    });
+    if (!res.ok) return setMsg(`❌ ${res.error}`);
+    window.Telegram?.WebApp?.openInvoice?.(res.invoiceUrl, (st: string) => {
+      if (st === 'paid') {
+        setMsg(zh ? '🎉 广告位购买成功，已立即全站生效！' : '🎉 Ad purchased & live now!');
+        setShowAdBuy(false);
+        setAdTitleInput('');
+        setTimeout(refreshAds, 1500);
+      }
+    });
+  };
+
+
   // 红包
   const [pktTitle, setPktTitle] = useState(zh ? '群友专属福利红包' : 'Community Red Packet');
   const [pktAmount, setPktAmount] = useState('1000');
@@ -152,6 +195,7 @@ export default function App() {
       else if (sp.startsWith('evt_')) { setTargetId(sp.slice(4)); setTab('ENGAGE'); setSubView('EVENTS'); }
       else if (sp.startsWith('pol_')) { setTargetId(sp.slice(4)); setTab('ENGAGE'); setSubView('POLLS'); }
     }
+    refreshAds();
     apiFetch('/api/groups').then((d) => {
       if (d.ok && d.groups?.length) {
         setGroups(d.groups);
@@ -211,19 +255,31 @@ export default function App() {
   const AdSlot = ({ pos }: { pos: 'TOP' | 'BOTTOM' }) => {
     if (isPro) return null;
     const isTop = pos === 'TOP';
+    const ad = isTop ? activeAds.top : activeAds.bottom;
     return (
-      <div style={{ padding: '8px 12px', borderRadius: 12, border: '1px dashed rgba(128,128,128,0.35)', background: 'rgba(128,128,128,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <div onClick={() => window.open('https://t.me/grouppilot6299bot', '_blank')} style={{ flex: 1, cursor: 'pointer', minWidth: 0 }}>
+      <div style={{ padding: '8px 10px', borderRadius: 12, border: '1px dashed rgba(128,128,128,0.35)', background: 'rgba(var(--tgui--bg_color_rgb, 255,255,255), 0.72)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+        <div
+          onClick={() => {
+            if (ad?.target_url) window.open(ad.target_url, '_blank');
+            else { setAdPos(pos); setShowAdBuy(true); }
+          }}
+          style={{ flex: 1, cursor: 'pointer', minWidth: 0 }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, background: 'rgba(128,128,128,0.2)' }}>{zh ? '广告' : 'AD'}</span>
             <span style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {isTop ? (zh ? '🔥 顶部赞助位招租 · 触达精准群友' : '🔥 Top Sponsor Slot Available') : (zh ? '📢 底部推广位 · 支持跳转频道/官网' : '📢 Bottom Ad Slot · Reach Active Groups')}
+              {ad ? ad.title : (isTop ? (zh ? '🔥 顶部赞助位招租 · 50 Stars/7天' : '🔥 Top Ad Slot · 50 Stars/7d') : (zh ? '📢 底部推广位招租 · 30 Stars/7天' : '📢 Bottom Ad Slot · 30 Stars/7d'))}
             </span>
           </div>
         </div>
-        <button onClick={() => { setSubView('NONE'); setTab('PRO'); }} style={{ padding: '4px 8px', borderRadius: 8, border: 'none', background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-          {zh ? '去广告' : 'No Ads'}
-        </button>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button onClick={() => { setAdPos(pos); setShowAdBuy(true); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(255,152,0,0.16)', color: '#e65100', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+            {zh ? '投放' : 'Buy'}
+          </button>
+          <button onClick={() => { setShowAdBuy(false); setSubView('NONE'); setTab('PRO'); }} style={{ padding: '4px 7px', borderRadius: 8, border: 'none', background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+            {zh ? '去广告' : 'No Ads'}
+          </button>
+        </div>
       </div>
     );
   };
@@ -297,6 +353,9 @@ export default function App() {
         <span style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, background: isPro ? 'rgba(255,193,7,0.2)' : 'rgba(128,128,128,0.15)', fontWeight: 700 }}>
           {isPro ? 'PRO' : 'FREE'}
         </span>
+        <button onClick={handleShareApp} style={{ padding: '4px 8px', borderRadius: 8, border: 'none', background: 'rgba(36,129,204,0.15)', color: '#2481cc', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+          📤 {zh ? '分享' : 'Share'}
+        </button>
         <button onClick={toggleLang} style={{ padding: '4px 8px', borderRadius: 8, border: '1px solid rgba(128,128,128,0.3)', background: 'transparent', color: 'inherit', fontSize: 12, cursor: 'pointer' }}>
           {zh ? 'EN' : '中'}
         </button>
@@ -305,6 +364,25 @@ export default function App() {
       {/* 主内容区（底部留白给 Tab 栏） */}
       <div style={{ padding: '10px 12px 84px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <AdSlot pos="TOP" />
+
+        
+        {showAdBuy && (
+          <Section header={zh ? '📢 自助投放广告位（付款即上线）' : '📢 Buy Ad Slot (Instant Live)'}>
+            <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <select style={inputStyle} value={adPos} onChange={(e) => setAdPos(e.target.value as any)}>
+                <option value="TOP">{zh ? '🔥 顶部黄金广告位（50 Stars / 7天）' : '🔥 Top Banner Slot (50 Stars / 7d)'}</option>
+                <option value="BOTTOM">{zh ? '📢 底部品牌广告位（30 Stars / 7天）' : '📢 Bottom Banner Slot (30 Stars / 7d)'}</option>
+              </select>
+              <input style={inputStyle} value={adTitleInput} onChange={(e) => setAdTitleInput(e.target.value)} placeholder={zh ? '广告标题（建议 20 字以内）' : 'Ad headline (max 36 chars)'} />
+              <input style={inputStyle} value={adUrlInput} onChange={(e) => setAdUrlInput(e.target.value)} placeholder="https://t.me/your_channel" />
+              <Button stretched onClick={() => handleBuyAd('NORMAL')}>⭐ {adPos === 'TOP' ? '50' : '30'} Stars {zh ? '立即购买并上线（7天）' : 'Buy & Go Live (7d)'}</Button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Button stretched size="s" mode="bezeled" onClick={() => handleBuyAd('TEST')}>🧪 1 Star {zh ? '测试投放' : 'Test'}</Button>
+                <Button stretched size="s" mode="outline" onClick={() => setShowAdBuy(false)}>{zh ? '关闭' : 'Close'}</Button>
+              </div>
+            </div>
+          </Section>
+        )}
 
         {msg && <div style={{ padding: '10px 12px', borderRadius: 10, background: 'rgba(36,129,204,0.12)', fontSize: 13 }}>{msg}</div>}
 
