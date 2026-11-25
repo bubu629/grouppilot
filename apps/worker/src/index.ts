@@ -1066,19 +1066,37 @@ app.post("/webhook/custom/:groupId", async (c) => {
 });
 
 
-// ==================== 12. Pro 群组数据统计看板 ====================
+// ==================== 12. Pro 群组数据统计看板（全维度 12 项） ====================
 app.get("/api/groups/:id/stats", async (c) => {
   const groupId = Number(c.req.param("id"));
   const today = new Date().toISOString().slice(0, 10);
 
-  const [members, checkinsToday, ptsSum, invitesSum, pkts, rfls, orders] = await Promise.all([
+  const [
+    members,
+    checkinsToday,
+    checkinsTotal,
+    ptsSum,
+    invitesSum,
+    pkts,
+    rfls,
+    evts,
+    pols,
+    orders,
+    codesLeft,
+    bcs,
+  ] = await Promise.all([
     c.env.DB.prepare("SELECT COUNT(*) as c FROM points_accounts WHERE group_id = ?").bind(groupId).first<any>(),
     c.env.DB.prepare("SELECT COUNT(*) as c FROM checkins WHERE group_id = ? AND checkin_date = ?").bind(groupId, today).first<any>(),
-    c.env.DB.prepare("SELECT COALESCE(SUM(total_earned), 0) as s FROM points_accounts WHERE group_id = ?").bind(groupId).first<any>(),
+    c.env.DB.prepare("SELECT COUNT(*) as c FROM checkins WHERE group_id = ?").bind(groupId).first<any>(),
+    c.env.DB.prepare("SELECT COALESCE(SUM(total_earned), 0) as earned, COALESCE(SUM(balance), 0) as bal FROM points_accounts WHERE group_id = ?").bind(groupId).first<any>(),
     c.env.DB.prepare("SELECT COALESCE(SUM(join_count), 0) as s FROM invite_links WHERE group_id = ?").bind(groupId).first<any>(),
     c.env.DB.prepare("SELECT COUNT(*) as c FROM red_packets WHERE group_id = ?").bind(groupId).first<any>(),
     c.env.DB.prepare("SELECT COUNT(*) as c FROM raffles WHERE group_id = ?").bind(groupId).first<any>(),
-    c.env.DB.prepare("SELECT COUNT(*) as c FROM store_redemptions WHERE group_id = ?").bind(groupId).first<any>(),
+    c.env.DB.prepare("SELECT COUNT(*) as c FROM events WHERE group_id = ?").bind(groupId).first<any>(),
+    c.env.DB.prepare("SELECT COUNT(*) as c FROM polls WHERE group_id = ?").bind(groupId).first<any>(),
+    c.env.DB.prepare("SELECT COUNT(*) as c, COALESCE(SUM(cost_points), 0) as spent FROM store_redemptions WHERE group_id = ?").bind(groupId).first<any>(),
+    c.env.DB.prepare("SELECT COUNT(*) as c FROM store_codes WHERE group_id = ? AND used_by = 0").bind(groupId).first<any>(),
+    c.env.DB.prepare("SELECT COUNT(*) as c FROM group_broadcasts WHERE group_id = ? AND enabled = 1").bind(groupId).first<any>(),
   ]);
 
   return c.json({
@@ -1086,10 +1104,17 @@ app.get("/api/groups/:id/stats", async (c) => {
     stats: {
       activeMembers: members?.c || 0,
       checkinsToday: checkinsToday?.c || 0,
-      totalPointsIssued: ptsSum?.s || 0,
+      checkinsTotal: checkinsTotal?.c || 0,
       totalInvites: invitesSum?.s || 0,
-      totalActivities: (pkts?.c || 0) + (rfls?.c || 0),
+      redPackets: pkts?.c || 0,
+      raffles: rfls?.c || 0,
+      events: evts?.c || 0,
+      polls: pols?.c || 0,
+      totalPointsIssued: ptsSum?.earned || 0,
+      totalPointsSpent: orders?.spent || 0,
       totalRedemptions: orders?.c || 0,
+      remainingCodes: codesLeft?.c || 0,
+      activeBroadcasts: bcs?.c || 0,
     },
   });
 });

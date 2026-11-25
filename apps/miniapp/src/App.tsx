@@ -713,25 +713,34 @@ export default function App() {
             </Section>
 
             
-            <Section header={zh ? '📊 Pro 数据统计看板' : '📊 Pro Analytics Dashboard'}>
+            <Section header={zh ? '📊 Pro 全维度数据看板' : '📊 Pro Full Analytics'}>
               <div style={{ padding: '10px 14px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                 {[
-                  { label: zh ? '活跃人数' : 'Members', val: proStats?.activeMembers ?? '-' },
-                  { label: zh ? '今日签到' : 'Check-ins', val: proStats?.checkinsToday ?? '-' },
+                  { label: zh ? '持分人数' : 'Members', val: proStats?.activeMembers ?? '-' },
+                  { label: zh ? '今日签到' : 'Today Check-in', val: proStats?.checkinsToday ?? '-' },
+                  { label: zh ? '累计签到' : 'All Check-ins', val: proStats?.checkinsTotal ?? '-' },
                   { label: zh ? '裂变拉新' : 'Invites', val: proStats?.totalInvites ?? '-' },
-                  { label: zh ? '发放积分' : 'PTS Issued', val: proStats?.totalPointsIssued ?? '-' },
-                  { label: zh ? '红包/抽奖' : 'Activities', val: proStats?.totalActivities ?? '-' },
-                  { label: zh ? '商城兑换' : 'Orders', val: proStats?.totalRedemptions ?? '-' },
+                  { label: zh ? '累计红包' : 'Red Packets', val: proStats?.redPackets ?? '-' },
+                  { label: zh ? '累计抽奖' : 'Raffles', val: proStats?.raffles ?? '-' },
+                  { label: zh ? '活动场次' : 'Events', val: proStats?.events ?? '-' },
+                  { label: zh ? '群组投票' : 'Polls', val: proStats?.polls ?? '-' },
+                  { label: zh ? '累计发分' : 'PTS Issued', val: proStats?.totalPointsIssued ?? '-' },
+                  { label: zh ? '商城耗分' : 'PTS Spent', val: proStats?.totalPointsSpent ?? '-' },
+                  { label: zh ? '兑换笔数' : 'Orders', val: proStats?.totalRedemptions ?? '-' },
+                  { label: zh ? '卡密余量' : 'Keys Left', val: proStats?.remainingCodes ?? '-' },
                 ].map((s, idx) => (
-                  <div key={idx} style={{ padding: '10px 6px', borderRadius: 10, background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.16)', textAlign: 'center' }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: '#38bdf8' }}>{s.val}</div>
-                    <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>{s.label}</div>
+                  <div key={idx} style={{ padding: '9px 6px', borderRadius: 10, background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.16)', textAlign: 'center' }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#38bdf8' }}>{s.val}</div>
+                    <div style={{ fontSize: 11, opacity: 0.72, marginTop: 2 }}>{s.label}</div>
                   </div>
                 ))}
               </div>
-              <div style={{ padding: '0 14px 10px' }}>
+              <div style={{ padding: '0 14px 10px', display: 'flex', gap: 8 }}>
                 <Button stretched size="s" mode="bezeled" onClick={handleExportCsv}>
-                  {zh ? '📥 导出完整积分榜报表（Bot 私聊发 CSV）' : '📥 Export Full Leaderboard (DM CSV)'}
+                  {zh ? '📥 私聊发 CSV 报表' : '📥 DM CSV Report'}
+                </Button>
+                <Button size="s" mode="outline" onClick={() => apiFetch(`/api/groups/${selectedGroupId}/stats`).then((d) => { if (d.ok) { setProStats(d.stats); setMsg(zh ? '✅ 数据已刷新' : '✅ Refreshed'); } })}>
+                  {zh ? '🔄 刷新' : '🔄'}
                 </Button>
               </div>
             </Section>
