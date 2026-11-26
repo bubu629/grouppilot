@@ -76,6 +76,9 @@ export default function App() {
   const [targetId, setTargetId] = useState<string | null>(null);
   const [groups, setGroups] = useState<any[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  const [showFb, setShowFb] = useState(false);
+  const [fbText, setFbText] = useState('');
+  const [fbSending, setFbSending] = useState(false);
   const [nativeGws, setNativeGws] = useState<{ items: any[]; stats: { total_count: number; total_stars: number } }>({ items: [], stats: { total_count: 0, total_stars: 0 } });
   const [msg, setMsg] = useState<string>('');
 
@@ -981,6 +984,89 @@ export default function App() {
         })}
       </div>
           </div>
+    
+      {/* 悬浮意见反馈按钮 */}
+      <button
+        onClick={() => setShowFb(true)}
+        style={{
+          position: 'fixed', right: 14, bottom: 76, zIndex: 90,
+          background: 'rgba(30, 41, 59, 0.92)', color: '#e2e8f0',
+          border: '1px solid rgba(148, 163, 184, 0.35)', borderRadius: 999,
+          padding: '7px 12px', fontSize: 12, fontWeight: 600,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.35)', cursor: 'pointer'
+        }}
+      >
+        {zh ? '💬 反馈' : '💬 Feedback'}
+      </button>
+
+      {/* 意见反馈弹窗 */}
+      {showFb && (
+        <div
+          onClick={() => setShowFb(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 100,
+            background: 'rgba(0,0,0,0.65)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', padding: 16
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 360, background: '#1e293b',
+              borderRadius: 14, padding: 16, border: '1px solid rgba(255,255,255,0.12)',
+              display: 'flex', flexDirection: 'column', gap: 10
+            }}
+          >
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>
+              {zh ? '💬 意见反馈' : '💬 Send Feedback'}
+            </div>
+            <div style={{ fontSize: 12, color: '#94a3b8' }}>
+              {zh ? '遇到 Bug 或有新功能建议？提交后将直达开发者。' : 'Found a bug or have a feature request? Send it directly to the developer.'}
+            </div>
+            <textarea
+              value={fbText}
+              onChange={(e) => setFbText(e.target.value)}
+              placeholder={zh ? '请输入您的建议或遇到的问题...' : 'Describe your issue or suggestion...'}
+              style={{
+                width: '100%', minHeight: 90, padding: 10, borderRadius: 8,
+                background: '#0f172a', color: '#fff', border: '1px solid rgba(255,255,255,0.15)',
+                fontSize: 13, boxSizing: 'border-box', resize: 'vertical'
+              }}
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowFb(false)}
+                style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.1)', color: '#cbd5e1', fontSize: 13 }}
+              >
+                {zh ? '取消' : 'Cancel'}
+              </button>
+              <button
+                disabled={fbSending || !fbText.trim()}
+                onClick={async () => {
+                  setFbSending(true);
+                  const curGrp = groups.find((g: any) => String(g.group_id) === String(selectedGroupId));
+                  const r = await apiFetch('/api/feedback', {
+                    method: 'POST',
+                    body: JSON.stringify({ text: fbText, groupId: selectedGroupId, groupTitle: curGrp?.title || '' }),
+                  });
+                  setFbSending(false);
+                  if (r.ok) {
+                    setFbText('');
+                    setShowFb(false);
+                    setMsg(zh ? '✅ 反馈已发送，感谢您的建议！' : '✅ Feedback sent! Thank you.');
+                  } else {
+                    setMsg(r.error || 'Failed');
+                  }
+                }}
+                style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: '#3b82f6', color: '#fff', fontSize: 13, fontWeight: 600, opacity: (fbSending || !fbText.trim()) ? 0.5 : 1 }}
+              >
+                {fbSending ? (zh ? '发送中...' : 'Sending...') : (zh ? '提交反馈' : 'Submit')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </AppRoot>
   );
 }

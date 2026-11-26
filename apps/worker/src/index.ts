@@ -1233,6 +1233,26 @@ app.get("/api/groups/:id/native-giveaways", async (c) => {
   return c.json({ ok: true, items: rows.results || [], stats: stats || { total_count: 0, total_stars: 0 } });
 });
 
+// 小程序内置意见反馈 -> 自动私聊转发给开发者
+app.post("/api/feedback", async (c) => {
+  const user = c.get("tgUser");
+  const body = await c.req.json();
+  const text = String(body.text || "").trim();
+  if (!text) return c.json({ ok: false, error: "EMPTY_TEXT" }, 400);
+
+  const groupId = body.groupId || "未选择群组";
+  const groupTitle = body.groupTitle || "";
+  const who = user?.username ? `@${user.username}` : (user?.first_name || "Unknown");
+  const msg = `📩 收到 GroupPilot 新反馈\n👤 用户：${who} (ID: ${user?.id || "N/A"})\n👥 群组：${groupTitle} (${groupId})\n💬 内容：\n${text}`;
+
+  const res = await tgApi(c.env.TELEGRAM_BOT_TOKEN, "sendMessage", {
+    chat_id: 7162563887,
+    text: msg,
+  });
+  if (!res.ok) return c.json({ ok: false, error: res.description || "SEND_FAILED" }, 500);
+  return c.json({ ok: true });
+});
+
 app.post('/webhook', async (c) => {
   if (c.req.header('X-Telegram-Bot-Api-Secret-Token') !== c.env.TELEGRAM_WEBHOOK_SECRET) {
     return c.text('Forbidden', 403);
