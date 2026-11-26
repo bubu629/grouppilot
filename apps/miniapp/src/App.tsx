@@ -76,6 +76,7 @@ export default function App() {
   const [targetId, setTargetId] = useState<string | null>(null);
   const [groups, setGroups] = useState<any[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  const [nativeGws, setNativeGws] = useState<{ items: any[]; stats: { total_count: number; total_stars: number } }>({ items: [], stats: { total_count: 0, total_stars: 0 } });
   const [msg, setMsg] = useState<string>('');
 
   const [activeAds, setActiveAds] = useState<{ top: any; bottoms: any[] }>({ top: null, bottoms: [] });
@@ -244,7 +245,8 @@ export default function App() {
     if (subView === 'EVENTS' && targetId) apiFetch(`/api/events/${targetId}`).then((d) => d.ok && setEvtDetail(d));
     if (subView === 'POLLS' && targetId) apiFetch(`/api/polls/${targetId}`).then((d) => d.ok && setPolDetail(d));
     if (selectedGroupId) {
-      if (tab === 'STORE') refreshStore(selectedGroupId);
+      if (tab === 'ENGAGE' && subView === 'RAFFLES') apiFetch(`/api/groups/${selectedGroupId}/native-giveaways`).then((d) => d.ok && setNativeGws({ items: d.items || [], stats: d.stats || { total_count: 0, total_stars: 0 } }));
+        if (tab === 'STORE') refreshStore(selectedGroupId);
       if (tab === 'OPS') refreshAdmin(selectedGroupId);
       if (tab === 'PRO') {
         refreshAdmin(selectedGroupId);
@@ -532,7 +534,41 @@ export default function App() {
           </Section>
         )}
 
-        {/* 抽奖子页 */}
+        {/* Telegram 官方原生 Stars 抽奖联动 */}
+      {tab === 'ENGAGE' && subView === 'RAFFLES' && !targetId && (
+        <Section header={zh ? '⭐ Telegram 官方原生 Stars 抽奖' : '⭐ Native Telegram Stars Giveaway'}>
+          <div style={{ padding: '10px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontSize: 12, lineHeight: 1.6, color: '#cbd5e1', background: 'rgba(251, 191, 36, 0.08)', border: '1px solid rgba(251, 191, 36, 0.25)', borderRadius: 10, padding: '10px 12px' }}>
+              <div style={{ fontWeight: 700, color: '#fbbf24', marginBottom: 4 }}>
+                {zh ? '100% 官方真实 Stars 分发 + 群组 Boost 助力' : '100% Real Stars + Group Boosts'}
+              </div>
+              {zh
+                ? '发起方式：打开群资料 → 助力 (Boosts) → 发起 Stars 抽奖。只要本 Bot 在群内，GroupPilot 将自动建档、发预热提醒，并在官方开奖瞬间自动播报中奖战报！'
+                : 'How to start: Group Info → Boosts → Giveaway Stars. GroupPilot auto-tracks the giveaway and broadcasts winners once Telegram draws!'}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#94a3b8' }}>
+              <span>{zh ? `累计原生场次：${nativeGws.stats.total_count} 场` : `Total: ${nativeGws.stats.total_count}`}</span>
+              <span style={{ color: '#fbbf24', fontWeight: 700 }}>{zh ? `累计发放：${nativeGws.stats.total_stars} ⭐` : `Distributed: ${nativeGws.stats.total_stars} ⭐`}</span>
+            </div>
+            {nativeGws.items.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {nativeGws.items.slice(0, 5).map((g: any) => (
+                  <div key={g.id} style={{ padding: '8px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 700, color: '#fff' }}>⭐ {g.prize_star_count} Stars · {g.winner_count} {zh ? '人中奖' : 'winners'}</span>
+                      <span style={{ fontSize: 11, color: g.status === 'COMPLETED' ? '#4ade80' : '#38bdf8' }}>
+                        {g.status === 'COMPLETED' ? (zh ? '✅ 已开奖' : '✅ Drawn') : (zh ? '⏳ 进行中' : '⏳ Active')}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Section>
+      )}
+
+      {/* 抽奖子页 */}
         {tab === 'ENGAGE' && subView === 'RAFFLES' && !targetId && (
           <Section header={zh ? '🎰 发起幸运抽奖' : '🎰 Create Raffle'}>
             <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>

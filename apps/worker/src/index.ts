@@ -1221,6 +1221,18 @@ app.post("/api/events/:id/members/:uid/checkin", async (c) => {
 });
 
 // ==================== 4. Webhook & Cron ====================
+// 查询本群 Telegram 原生 Stars Giveaway 记录
+app.get("/api/groups/:id/native-giveaways", async (c) => {
+  const groupId = Number(c.req.param("id"));
+  const rows = await c.env.DB.prepare(
+    "SELECT * FROM native_giveaways WHERE group_id = ? ORDER BY created_at DESC LIMIT 20"
+  ).bind(groupId).all<any>();
+  const stats = await c.env.DB.prepare(
+    "SELECT COUNT(*) as total_count, COALESCE(SUM(prize_star_count), 0) as total_stars FROM native_giveaways WHERE group_id = ?"
+  ).bind(groupId).first<any>();
+  return c.json({ ok: true, items: rows.results || [], stats: stats || { total_count: 0, total_stars: 0 } });
+});
+
 app.post('/webhook', async (c) => {
   if (c.req.header('X-Telegram-Bot-Api-Secret-Token') !== c.env.TELEGRAM_WEBHOOK_SECRET) {
     return c.text('Forbidden', 403);
@@ -1238,6 +1250,63 @@ app.post('/webhook', async (c) => {
         VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(group_id) DO UPDATE SET title = excluded.title, bot_active = excluded.bot_active, updated_at = excluded.updated_at
       `).bind(chat.id, chat.title || 'Unnamed Group', active, now, now).run();
+    }
+  }
+
+  // 监听 Telegram 原生 Stars Giveaway 创建
+  if (update.message?.giveaway) {
+    const gw = update.message.giveaway;
+    const chatId = update.message.chat.id;
+    const msgId = update.message.message_id;
+    const stars = Number(gw.prize_star_count || 0);
+    const winners = Number(gw.winner_count || 0);
+    const selDate = Number(gw.winners_selection_date || 0) * 1000;
+
+    await c.env.DB.prepare(
+      `INSERT INTO native_giveaways (id, group_id, message_id, prize_star_count, winner_count, winners_selection_date, status, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE', ?)`
+    ).bind(crypto.randomUUID(), chatId, msgId, stars, winners, selDate, now).run();
+
+    if (stars > 0) {
+      await tgApi(c.env.TELEGRAM_BOT_TOKEN, 'sendMessage', {
+        chat_id: chatId,
+        text: `🔥 群主已开启 Telegram 官方原生抽奖！\n⭐ 总奖池：${stars} Stars\n🎁 中奖名额：${winners} 人\n请点击上方官方抽奖卡片参与，开奖后 GroupPilot 将自动播报战报！`,
+      }).catch(() => {});
+    }
+  }
+
+  // 监听 Telegram 原生 Stars Giveaway 官方开奖结果
+  if (update.message?.giveaway_winners) {
+    const gw = update.message.giveaway_winners;
+    const chatId = update.message.chat.id;
+    const stars = Number(gw.prize_star_count || 0);
+    const winnerCount = Number(gw.winner_count || 0);
+    const winnersList = (gw.winners || []).map((w: any) => ({
+      id: w.id,
+      name: w.username ? `@${w.username}` : (w.first_name || String(w.id)),
+    }));
+
+    const existing = await c.env.DB.prepare(
+      "SELECT id FROM native_giveaways WHERE group_id = ? AND status = 'ACTIVE' ORDER BY created_at DESC LIMIT 1"
+    ).bind(chatId).first<any>();
+
+    if (existing) {
+      await c.env.DB.prepare(
+        "UPDATE native_giveaways SET status = 'COMPLETED', winners_json = ?, completed_at = ? WHERE id = ?"
+      ).bind(JSON.stringify(winnersList), now, existing.id).run();
+    } else {
+      await c.env.DB.prepare(
+        `INSERT INTO native_giveaways (id, group_id, message_id, prize_star_count, winner_count, status, winners_json, created_at, completed_at)
+         VALUES (?, ?, ?, ?, ?, 'COMPLETED', ?, ?, ?)`
+      ).bind(crypto.randomUUID(), chatId, gw.giveaway_message_id || null, stars, winnerCount, JSON.stringify(winnersList), now, now).run();
+    }
+
+    if (winnersList.length > 0) {
+      const namesStr = winnersList.map((w: any) => w.name).join('、');
+      await tgApi(c.env.TELEGRAM_BOT_TOKEN, 'sendMessage', {
+        chat_id: chatId,
+        text: `🎉 官方原生抽奖已开奖！\n⭐ 奖池：${stars > 0 ? stars + ' Stars' : 'Telegram 官方奖品'}\n🏆 恭喜中奖者：${namesStr}\n真实 Stars 已由 Telegram 官方直接发放至账户！`,
+      }).catch(() => {});
     }
   }
 
